@@ -24,8 +24,17 @@ def upgrade() -> None:
         sa.Column("created_at", sa.DateTime, nullable=False),
         sa.Column("last_used_at", sa.DateTime, nullable=True),
     )
+    op.create_table(
+        "session",
+        sa.Column("id", sa.Integer, primary_key=True),
+        sa.Column("token_hash", sa.String, nullable=False, unique=True),
+        sa.Column("user_id", sa.Integer, sa.ForeignKey("user.id"), nullable=False),
+        sa.Column("created_at", sa.DateTime, nullable=False),
+        sa.Column("expires_at", sa.DateTime, nullable=False),
+    )
 
 
 def downgrade() -> None:
+    op.drop_table("session")
     op.drop_table("api_token")
     op.drop_table("user")

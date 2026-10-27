@@ -3,9 +3,13 @@ from typing import Any
 
 from fastapi import Request
 from sqlalchemy import Engine, create_engine, event
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import DeclarativeBase, Session
 
 from lugnut.settings import Settings
+
+
+class Base(DeclarativeBase):
+    pass
 
 
 def _sqlite_pragmas(dbapi_conn: Any, _record: Any) -> None:
