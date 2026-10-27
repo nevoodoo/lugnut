@@ -9,6 +9,7 @@ from lugnut.auth.routes import router as auth_router
 from lugnut.db import get_engine
 from lugnut.migrate import upgrade_database
 from lugnut.settings import Settings
+from lugnut.settings_api import router as settings_router
 from lugnut.web import mount_frontend
 
 
@@ -26,6 +27,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.engine = get_engine(settings)
     app.state.login_limiter = LoginLimiter()
     app.include_router(auth_router)
+    app.include_router(settings_router)
 
     @app.get("/api/health")
     def health() -> dict[str, str]:

@@ -1,0 +1,75 @@
+import json
+from importlib.resources import files
+from typing import Any, Literal
+
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel, Field
+from sqlalchemy.orm import Session
+
+from lugnut.auth.deps import DB
+from lugnut.auth.routes import Reader, Writer
+from lugnut.models import Setting
+
+router = APIRouter(prefix="/api")
+KEY = "install"
+DEFAULT_REGION = "au"
+
+
+def load_regions() -> dict[str, dict[str, Any]]:
+    out = {}
+    for f in sorted(files("lugnut").joinpath("regions").iterdir(), key=lambda p: p.name):
+        if f.name.endswith(".json"):
+            out[f.name.removesuffix(".json")] = json.loads(f.read_text("utf-8"))
+    return out
+
+
+class InstallSettings(BaseModel):
+    region: str
+    currency: str = Field(pattern=r"^[A-Z]{3}$")
+    distance_unit: Literal["km", "mi"]
+    volume_unit: Literal["L", "gal_us", "gal_imp"]
+    date_format: str = Field(min_length=1, max_length=32)
+
+
+class SettingsIn(BaseModel):
+    region: str | None = None
+    currency: str | None = Field(None, pattern=r"^[A-Z]{3}$")
+    distance_unit: Literal["km", "mi"] | None = None
+    volume_unit: Literal["L", "gal_us", "gal_imp"] | None = None
+    date_format: str | None = Field(None, min_length=1, max_length=32)
+
+
+def _defaults(code: str) -> InstallSettings:
+    r = load_regions()[code]
+    return InstallSettings(region=code, **{k: r[k] for k in list(InstallSettings.model_fields)[1:]})
+
+
+def get_install_settings(db: Session) -> InstallSettings:
+    row = db.get(Setting, KEY)
+    return InstallSettings.model_validate(row.value) if row else _defaults(DEFAULT_REGION)
+
+
+@router.get("/regions")
+def list_regions(_: Reader) -> list[dict[str, Any]]:
+    return list(load_regions().values())
+
+
+@router.get("/settings")
+def read_settings(_: Reader, db: DB) -> InstallSettings:
+    return get_install_settings(db)
+
+
+@router.put("/settings")
+def replace_settings(body: SettingsIn, _: Writer, db: DB) -> InstallSettings:
+    code = body.region or get_install_settings(db).region
+    if code not in load_regions():
+        raise HTTPException(422, f"Unknown region {code!r}")
+    new = _defaults(code).model_copy(update=body.model_dump(exclude_none=True))
+    value = new.model_dump()
+    row = db.get(Setting, KEY)
+    if row:
+        row.value = value
+    else:
+        db.add(Setting(key=KEY, value=value))
+    db.commit()
+    return new

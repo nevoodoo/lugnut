@@ -1,0 +1,30 @@
+{
+  "code": "us",
+  "name": "United States",
+  "currency": "USD",
+  "distance_unit": "mi",
+  "volume_unit": "gal_us",
+  "date_format": "MM/DD/YYYY",
+  "labels": {
+    "registration": "Registration",
+    "inspection": "Inspection"
+  },
+  "record_types": [
+    "work",
+    "fuel",
+    "odometer",
+    "registration",
+    "insurance",
+    "inspection",
+    "toll",
+    "parking",
+    "fine",
+    "todo",
+    "note"
+  ],
+  "expiry_reminder_days": {
+    "registration": 30,
+    "insurance": 30,
+    "inspection": 30
+  }
+}
