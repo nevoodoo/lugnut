@@ -19,6 +19,14 @@ nav = [
   { "Contributing" = "contributing.md" },
 ]
 
+# Listing any extension replaces Zensical's defaults, so the ones the pages use are named here.
+[project.markdown_extensions.admonition]
+[project.markdown_extensions.tables]
+[project.markdown_extensions.toc]
+permalink = true
+[project.markdown_extensions.pymdownx.details]
+[project.markdown_extensions.pymdownx.superfences]
+[project.markdown_extensions.pymdownx.highlight]
 [project.markdown_extensions.pymdownx.snippets]
 base_path = ["."]
 check_paths = true
