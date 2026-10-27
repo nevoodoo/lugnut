@@ -1,7 +1,9 @@
 import os
+import sqlite3
 
 import pytest
 from alembic import command
+from alembic.script import ScriptDirectory
 
 import lugnut.migrate as migrate
 from lugnut.migrate import DataDirError, MigrationFailed, _alembic_config, upgrade_database
@@ -12,6 +14,15 @@ def downgrade_one_for_test(settings: Settings) -> None:
     command.downgrade(_alembic_config(settings), "-1")
 
 
+def _revision(db) -> str | None:
+    con = sqlite3.connect(db)
+    try:
+        row = con.execute("select version_num from alembic_version").fetchone()
+        return row[0] if row else None
+    finally:
+        con.close()
+
+
 def test_backup_taken_before_migrating(tmp_path):
     # catches: migrating without a safety copy
     s = Settings(data_dir=tmp_path)
@@ -19,7 +30,10 @@ def test_backup_taken_before_migrating(tmp_path):
     downgrade_one_for_test(s)
     backup = upgrade_database(s)
     assert backup and backup.parent == tmp_path / "backups"
-    assert backup.stat().st_size > 0
+    # the backup holds the pre-upgrade schema, the live db is at head
+    head = ScriptDirectory.from_config(_alembic_config(s)).get_current_head()
+    assert _revision(backup) != head
+    assert _revision(s.db_path) == head
 
 
 def test_failed_migration_leaves_backup_and_raises(tmp_path, monkeypatch):

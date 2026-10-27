@@ -1,5 +1,11 @@
-import pytest
+from datetime import timedelta
 
+import pytest
+from sqlalchemy import update
+from sqlalchemy.orm import Session
+
+from lugnut.auth.deps import utcnow
+from lugnut.auth.models import LoginSession
 from lugnut.auth.ratelimit import LoginLimiter
 
 U = {"username": "admin", "password": "correct horse battery"}
@@ -82,3 +88,21 @@ def test_login_backoff_after_repeated_failures(client, fake_clock):
     assert client.post("/api/auth/login", json=GOOD).status_code == 429
     fake_clock.now += 1
     assert client.post("/api/auth/login", json=GOOD).status_code == 200
+
+
+def test_logout_kills_server_session(client, logged_in):
+    # catches: logout only clearing the cookie while the session stays valid
+    old = client.cookies["lugnut_session"]
+    assert client.post("/api/auth/logout", headers=cookie_auth).status_code == 204
+    client.cookies.clear()
+    client.cookies.set("lugnut_session", old)
+    assert client.get("/api/auth/me").status_code == 401
+
+
+def test_expired_session_rejected(client, logged_in):
+    # catches: sessions living past their expiry
+    assert client.get("/api/auth/me").status_code == 200
+    with Session(client.app.state.engine) as db:
+        db.execute(update(LoginSession).values(expires_at=utcnow() - timedelta(seconds=1)))
+        db.commit()
+    assert client.get("/api/auth/me").status_code == 401

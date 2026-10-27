@@ -37,8 +37,10 @@ def _prepare_data_dir(settings: Settings) -> None:
 
 
 def _backup(settings: Settings, revision: str | None) -> Path:
-    stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
+    stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%S%fZ")
     dest = settings.backup_dir / f"lugnut-{stamp}-{revision or 'base'}.db"
+    if dest.exists():
+        raise MigrationFailed(f"Backup {dest} already exists; refusing to overwrite it")
     src = sqlite3.connect(settings.db_path)
     dst = sqlite3.connect(dest)
     try:

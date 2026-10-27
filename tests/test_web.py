@@ -23,3 +23,11 @@ def test_spa_fallback_and_api_404(client_with_static):
     assert r.status_code == 200 and "text/html" in r.headers["content-type"]
     r = client_with_static.get("/api/nope")
     assert r.status_code == 404 and r.headers["content-type"].startswith("application/json")
+
+
+def test_static_path_traversal_blocked(client_with_static):
+    # catches: reading files outside the static dir
+    for path in ["/%2e%2e/%2e%2e/etc/passwd", "/assets/%2e%2e/%2e%2e/%2e%2e/etc/passwd"]:
+        r = client_with_static.get(path)
+        assert "root:" not in r.text
+        assert r.status_code == 404 or "<title>Lugnut</title>" in r.text
