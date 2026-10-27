@@ -1,7 +1,7 @@
 FROM node:22-slim@sha256:de170b39439eb0e5a3444ad7d60b015614a381e10fecae2e30ec9e735122f38d AS frontend
 WORKDIR /app/frontend
 COPY frontend/package.json frontend/package-lock.json ./
-RUN npm ci
+RUN npm ci --ignore-scripts
 COPY frontend/ ./
 # vite writes to ../src/lugnut/static
 RUN npm run build
@@ -24,5 +24,5 @@ ENV LUGNUT_DATA_DIR=/data LUGNUT_HOST=0.0.0.0
 VOLUME /data
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s \
-  CMD ["python", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:8080/api/health', timeout=3)"]
+  CMD ["python", "-c", "import os, urllib.request as u; u.urlopen('http://127.0.0.1:%s/api/health' % os.environ.get('LUGNUT_PORT', '8080'), timeout=3)"]
 CMD ["lugnut", "serve"]

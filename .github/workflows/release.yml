@@ -15,8 +15,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      id-token: write
-      attestations: write
     outputs:
       version: ${{ steps.version.outputs.version }}
     steps:
@@ -30,7 +28,7 @@ jobs:
       - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
         with:
           enable-cache: false
-      - run: npm ci && npm run build
+      - run: npm ci --ignore-scripts && npm run build
         working-directory: frontend
       - run: uv build
       - name: Wheel and sdist contain the frontend
@@ -49,11 +47,6 @@ jobs:
         run: |
           mkdir web
           (cd src/lugnut/static && zip -qr "$GITHUB_WORKSPACE/web/lugnut-web-$VERSION.zip" .)
-      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
-        with:
-          subject-path: |
-            dist/*
-            web/*
       - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: dist
@@ -91,6 +84,12 @@ jobs:
         with:
           name: web
           path: web
+
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: |
+            dist/*
+            web/*
 
       - uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
         with:
