@@ -74,6 +74,7 @@ jobs:
           export LUGNUT_DATA_DIR="$RUNNER_TEMP/data"
           cd "$RUNNER_TEMP"
           "$RUNNER_TEMP/venv/bin/lugnut" serve --port 8080 &
+          trap 'kill $!' EXIT
           curl --fail --retry 15 --retry-delay 1 --retry-connrefused http://127.0.0.1:8080/api/health
       - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
@@ -116,7 +117,9 @@ jobs:
         with:
           persist-credentials: false
       - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
-      - run: uvx zizmor .github/workflows
+      - run: uvx zizmor@1.31.1 .github/workflows
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
 
   dependency-review:
     if: github.event_name == 'pull_request'

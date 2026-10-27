@@ -12,7 +12,7 @@ workflows:
         - 'astral-sh/setup-uv@v7.6.0'
     '.github/workflows/codeql.yml':
         - 'actions/checkout@v6.1.0'
-        - 'github/codeql-action@v4.39.1'
+        - 'github/codeql-action@v4.39.0'
 dependencies:
     'actions/checkout@v6.1.0':
         ref: 'v6.1.0'
@@ -44,8 +44,8 @@ dependencies:
         commit: 'sha1-37802adc94f370d6bfd71619e3f0bf239e1f3b78'
         owner_id: 115962839
         repo_id: 846733598
-    'github/codeql-action@v4.39.1':
-        ref: 'v4.39.1'
-        commit: 'sha1-9b3254085494b55a0f7c4c2b3d2d52cc712ce370'
+    'github/codeql-action@v4.39.0':
+        ref: 'v4.39.0'
+        commit: 'sha1-6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee'
         owner_id: 9919
         repo_id: 259445878
