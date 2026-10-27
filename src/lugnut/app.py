@@ -1,10 +1,22 @@
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from importlib.metadata import version
 
 from fastapi import FastAPI
 
+from lugnut.migrate import upgrade_database
+from lugnut.settings import Settings
 
-def create_app() -> FastAPI:
-    app = FastAPI(title="Lugnut")
+
+def create_app(settings: Settings | None = None) -> FastAPI:
+    settings = settings or Settings()
+
+    @asynccontextmanager
+    async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
+        upgrade_database(settings)
+        yield
+
+    app = FastAPI(title="Lugnut", lifespan=lifespan)
 
     @app.get("/api/health")
     def health() -> dict[str, str]:
