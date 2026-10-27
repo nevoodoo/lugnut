@@ -67,5 +67,6 @@ def upgrade_database(settings: Settings) -> Path | None:
     try:
         command.upgrade(cfg, "head")
     except Exception as e:
-        raise MigrationFailed(f"Migration failed; backup at {backup}: {e}") from e
+        where = f"backup at {backup}" if backup else "no backup (new database)"
+        raise MigrationFailed(f"Migration failed; {where}: {e}") from e
     return backup

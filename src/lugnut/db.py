@@ -1,7 +1,7 @@
 from collections.abc import Iterator
-from functools import lru_cache
 from typing import Any
 
+from fastapi import Request
 from sqlalchemy import Engine, create_engine, event
 from sqlalchemy.orm import Session
 
@@ -21,12 +21,7 @@ def get_engine(settings: Settings) -> Engine:
     return engine
 
 
-@lru_cache
-def _default_engine() -> Engine:
-    return get_engine(Settings())
-
-
-def get_session() -> Iterator[Session]:
+def get_session(request: Request) -> Iterator[Session]:
     """FastAPI dependency."""
-    with Session(_default_engine()) as session:
+    with Session(request.app.state.engine) as session:
         yield session
