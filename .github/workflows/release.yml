@@ -1,0 +1,137 @@
+name: Publish release
+
+on:
+  workflow_call:
+    inputs:
+      tag:
+        description: Release tag, for example v0.1.0 or v0.1.0-rc.1
+        required: true
+        type: string
+
+permissions: {}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v6.1.0
+        with:
+          ref: ${{ inputs.tag }}
+          persist-credentials: false
+      - uses: actions/setup-node@v6.5.0
+        with:
+          node-version: 22
+      - uses: astral-sh/setup-uv@v7.6.0
+        with:
+          enable-cache: false
+      - run: npm ci --ignore-scripts && npm run build
+        working-directory: frontend
+      - run: uv build
+      - name: Wheel and sdist contain the frontend
+        run: |
+          unzip -l dist/*.whl | grep -q 'lugnut/static/index.html'
+          tar tzf dist/*.tar.gz | grep -q 'lugnut/static/index.html'
+      # The wheel name carries the PEP 440 version (0.1.0-rc.1 becomes 0.1.0rc1).
+      - id: version
+        run: |
+          wheel=$(basename dist/*.whl)
+          version=${wheel#lugnut-}
+          echo "version=${version%%-*}" >> "$GITHUB_OUTPUT"
+      - name: Zip the built frontend
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          mkdir web
+          (cd src/lugnut/static && zip -qr "$GITHUB_WORKSPACE/web/lugnut-web-$VERSION.zip" .)
+      - uses: actions/upload-artifact@v5.0.0
+        with:
+          name: dist
+          path: dist/*
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v5.0.0
+        with:
+          name: web
+          path: web/*
+          if-no-files-found: error
+
+  # Waits for the owner to approve the `release` environment.
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: write
+      packages: write
+      id-token: write
+      attestations: write
+    env:
+      TAG: ${{ inputs.tag }}
+      VERSION: ${{ needs.build.outputs.version }}
+    steps:
+      - uses: actions/checkout@v6.1.0
+        with:
+          ref: ${{ inputs.tag }}
+          persist-credentials: false
+      - uses: actions/download-artifact@v5.0.0
+        with:
+          name: dist
+          path: dist
+      - uses: actions/download-artifact@v5.0.0
+        with:
+          name: web
+          path: web
+
+      - uses: actions/attest-build-provenance@v4.2.2
+        with:
+          subject-path: |
+            dist/*
+            web/*
+
+      - uses: pypa/gh-action-pypi-publish@v1.14.2
+        with:
+          skip-existing: true
+      - id: tags
+        run: |
+          if [[ "$VERSION" == *rc* ]]; then moving=rc; else moving=latest; fi
+          {
+            echo 'tags<<EOF'
+            echo "ghcr.io/nevoodoo/lugnut:$VERSION"
+            echo "ghcr.io/nevoodoo/lugnut:$moving"
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+      - uses: docker/setup-qemu-action@v4.4.0
+      - uses: docker/setup-buildx-action@v4.4.1
+      - uses: docker/login-action@v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      - id: image
+        uses: docker/build-push-action@v7.4.0
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          provenance: false
+          tags: ${{ steps.tags.outputs.tags }}
+      - uses: actions/attest-build-provenance@v4.2.2
+        with:
+          subject-name: ghcr.io/nevoodoo/lugnut
+          subject-digest: ${{ steps.image.outputs.digest }}
+          push-to-registry: true
+
+      - name: Upload assets and publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh release upload "$TAG" dist/* web/* --clobber
+          if [[ "$VERSION" == *rc* ]]; then
+            gh release edit "$TAG" --draft=false --prerelease
+          else
+            gh release edit "$TAG" --draft=false
+          fi

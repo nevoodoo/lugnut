@@ -1,0 +1,14 @@
+.git
+.github
+docs
+data
+dist
+.venv
+node_modules
+**/node_modules
+src/lugnut/static
+**/__pycache__
+.mypy_cache
+.ruff_cache
+.pytest_cache
+.env*
