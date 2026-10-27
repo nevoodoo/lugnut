@@ -1,0 +1,135 @@
+name: Publish release
+
+on:
+  workflow_call:
+    inputs:
+      tag:
+        description: Release tag, for example v0.1.0 or v0.1.0-rc.1
+        required: true
+        type: string
+
+permissions: {}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          ref: ${{ inputs.tag }}
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: 22
+      - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
+        with:
+          enable-cache: false
+      - run: npm ci && npm run build
+        working-directory: frontend
+      - run: uv build
+      - name: Wheel and sdist contain the frontend
+        run: |
+          unzip -l dist/*.whl | grep -q 'lugnut/static/index.html'
+          tar tzf dist/*.tar.gz | grep -q 'lugnut/static/index.html'
+      # The wheel name carries the PEP 440 version (0.1.0-rc.1 becomes 0.1.0rc1).
+      - id: version
+        run: |
+          wheel=$(basename dist/*.whl)
+          version=${wheel#lugnut-}
+          echo "version=${version%%-*}" >> "$GITHUB_OUTPUT"
+      - name: Zip the built frontend
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          mkdir web
+          (cd src/lugnut/static && zip -qr "$GITHUB_WORKSPACE/web/lugnut-web-$VERSION.zip" .)
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: |
+            dist/*
+            web/*
+      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        with:
+          name: dist
+          path: dist/*
+          if-no-files-found: error
+      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        with:
+          name: web
+          path: web/*
+          if-no-files-found: error
+
+  # Waits for the owner to approve the `release` environment.
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: write
+      packages: write
+      id-token: write
+      attestations: write
+    env:
+      TAG: ${{ inputs.tag }}
+      VERSION: ${{ needs.build.outputs.version }}
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          ref: ${{ inputs.tag }}
+          persist-credentials: false
+      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
+        with:
+          name: dist
+          path: dist
+      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
+        with:
+          name: web
+          path: web
+
+      - uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
+      - id: tags
+        run: |
+          if [[ "$VERSION" == *rc* ]]; then moving=rc; else moving=latest; fi
+          {
+            echo 'tags<<EOF'
+            echo "ghcr.io/nevoodoo/lugnut:$VERSION"
+            echo "ghcr.io/nevoodoo/lugnut:$moving"
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+      - uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      - id: image
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          provenance: false
+          tags: ${{ steps.tags.outputs.tags }}
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-name: ghcr.io/nevoodoo/lugnut
+          subject-digest: ${{ steps.image.outputs.digest }}
+          push-to-registry: true
+
+      - name: Upload assets and publish the release
+        run: |
+          gh release upload "$TAG" dist/* web/* --clobber
+          if [[ "$VERSION" == *rc* ]]; then
+            gh release edit "$TAG" --draft=false --prerelease
+          else
+            gh release edit "$TAG" --draft=false
+          fi
