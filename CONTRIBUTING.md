@@ -30,16 +30,8 @@ Test behaviour that can realistically break: data loss, auth, migrations, and AP
 
 ## Releases
 
-These notes are for the maintainer.
+The maintainer cuts releases. Merged PR titles become the release notes, so write them for the people using Lugnut.
 
-release-please opens a release PR from the conventional commit titles on `main`. Merging it creates a draft GitHub release and a tag. A `publish` job then waits for the maintainer's approval in the `release` environment and publishes to PyPI, to `ghcr.io/nevoodoo/lugnut` and to the GitHub release.
-
-To cut a release candidate, push an empty commit to `main` before merging the release PR:
-
-```sh
-git commit --allow-empty -m "chore: release 0.1.0-rc.1" -m "Release-As: 0.1.0-rc.1"
-```
-
-The footer must be the last paragraph. The git tag is `v0.1.0-rc.1`, PyPI and the image use `0.1.0rc1`, the GitHub release is marked as a pre-release, and the image is also tagged `rc` (not `latest`). To publish the final release after a candidate, use `Release-As: 0.1.0` the same way.
+## Workflows
 
 Workflows refer to actions by tag, and `.github/workflows/actions.lock` pins each tag to a commit. GitHub will not run a workflow whose actions are missing from the lockfile. After adding or changing an action, run `gh actions-lock` and commit the updated lockfile. Check it with `gh actions-lock --no-fix`.
