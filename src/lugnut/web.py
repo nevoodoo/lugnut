@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
@@ -20,11 +21,13 @@ def mount_frontend(app: FastAPI) -> None:
     def spa(path: str) -> FileResponse:
         if path == "api" or path.startswith("api/"):
             raise HTTPException(404, "Not found")
-        file = (root / path).resolve()
+        full = os.path.normpath(os.path.join(root, path))
+        inside = full.startswith(str(root) + os.sep)
+        is_file = inside and os.path.isfile(full)
         # A missing hashed asset (stale deploy) must 404, not get index.html.
-        if path.startswith("assets/") and not file.is_file():
+        if path.startswith("assets/") and not is_file:
             raise HTTPException(404, "Not found")
-        if path and file.is_file() and file.is_relative_to(root):
-            hashed = file.is_relative_to(root / "assets")
-            return FileResponse(file, headers=_IMMUTABLE if hashed else _NO_CACHE)
+        if is_file:
+            hashed = full.startswith(str(root / "assets") + os.sep)
+            return FileResponse(full, headers=_IMMUTABLE if hashed else _NO_CACHE)
         return FileResponse(root / "index.html", headers=_NO_CACHE)
