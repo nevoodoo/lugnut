@@ -18,8 +18,7 @@
   --side: #ebe5d8;
   --ink: #1f2a3a;
   --rule: #cfc6b3;
-  --muted: #7a6f5c;
-  --muted-text: #655b49; /* --muted is 4.3:1, under AA for small text */
+  --muted: #655b49;
   --rust: #b4441c;
   --on-rust: #ffffff;
   --ok: #2f6b45;
@@ -36,7 +35,6 @@
     --ink: #ece6d8;
     --rule: #3b4453;
     --muted: #a99f8b;
-    --muted-text: #a99f8b;
     --rust: #e4764d;
     --on-rust: #1a1208;
     --ok: #6fbf8a;
@@ -72,7 +70,7 @@ a {
   font-size: 0.75rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--muted-text);
+  color: var(--muted);
 }
 
 :focus-visible {
@@ -117,7 +115,7 @@ a {
   border: 0;
   border-radius: 8px;
   background: transparent;
-  color: var(--muted-text);
+  color: var(--muted);
   cursor: pointer;
 }
 .icon-btn:hover {
@@ -162,7 +160,7 @@ a {
   font: 400 1rem var(--text);
 }
 .field small {
-  color: var(--muted-text);
+  color: var(--muted);
 }
 .error {
   margin: 0;
@@ -205,7 +203,7 @@ a {
   min-height: 44px;
   padding: 0 0.75rem;
   border-radius: 8px;
-  color: var(--muted-text);
+  color: var(--muted);
   font-weight: 600;
   text-decoration: none;
 }
@@ -237,7 +235,7 @@ a {
 }
 .empty p {
   margin: 0;
-  color: var(--muted-text);
+  color: var(--muted);
 }
 .empty svg {
   color: var(--rust);
@@ -263,7 +261,7 @@ a {
   }
   .sidebar .garage {
     padding: 0 0.75rem;
-    color: var(--muted-text);
+    color: var(--muted);
     font-size: 0.875rem;
   }
   .sidebar .spacer {

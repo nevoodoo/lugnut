@@ -21,6 +21,9 @@ def mount_frontend(app: FastAPI) -> None:
         if path == "api" or path.startswith("api/"):
             raise HTTPException(404, "Not found")
         file = (root / path).resolve()
+        # A missing hashed asset (stale deploy) must 404, not get index.html.
+        if path.startswith("assets/") and not file.is_file():
+            raise HTTPException(404, "Not found")
         if path and file.is_file() and file.is_relative_to(root):
             hashed = file.is_relative_to(root / "assets")
             return FileResponse(file, headers=_IMMUTABLE if hashed else _NO_CACHE)
