@@ -8,6 +8,8 @@ from lugnut.auth.ratelimit import LoginLimiter
 from lugnut.auth.routes import router as auth_router
 from lugnut.db import get_engine
 from lugnut.migrate import upgrade_database
+from lugnut.records.job_types import router as job_types_router
+from lugnut.records.routes import router as records_router
 from lugnut.settings import Settings
 from lugnut.settings_api import router as settings_router
 from lugnut.vehicles.routes import router as vehicles_router
@@ -30,6 +32,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(auth_router)
     app.include_router(settings_router)
     app.include_router(vehicles_router)
+    app.include_router(records_router)
+    app.include_router(job_types_router)
 
     @app.get("/api/health")
     def health() -> dict[str, str]:

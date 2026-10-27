@@ -1,6 +1,5 @@
-from sqlalchemy import text
-
 from conftest import CSRF
+from sqlalchemy import text
 
 FULL_VEHICLE = {
     "name": "Hilux",

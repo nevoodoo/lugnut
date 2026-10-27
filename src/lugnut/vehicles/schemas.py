@@ -56,6 +56,4 @@ def to_out(v: Vehicle, install: InstallSettings) -> VehicleOut:
     unit = effective_unit(v.distance_unit, install)
     data = {c.name: getattr(v, c.name) for c in Vehicle.__table__.columns}
     km = data.pop("odometer_adjustment_km")
-    return VehicleOut(
-        **data, odometer_adjustment=km_to(km, unit), distance_unit_effective=unit
-    )
+    return VehicleOut(**data, odometer_adjustment=km_to(km, unit), distance_unit_effective=unit)
