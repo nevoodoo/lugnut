@@ -2,6 +2,7 @@
 name = "lugnut"
 version = "0.1.0.dev0"
 description = "Self-hosted vehicle maintenance tracker"
+readme = "README.md"
 license = "MIT"
 authors = [
     { name = "nevoodoo", email = "nevoodoo@users.noreply.github.com" }
