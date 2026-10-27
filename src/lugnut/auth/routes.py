@@ -86,6 +86,11 @@ def _start_session(request: Request, response: Response, db: DB, user: User) -> 
     return UserOut(id=user.id, username=user.username)
 
 
+@router.get("/setup")
+def setup_needed(db: DB) -> dict[str, bool]:
+    return {"needed": db.scalar(select(User.id)) is None}
+
+
 @router.post("/setup", status_code=201)
 def setup(body: SetupIn, request: Request, response: Response, db: DB) -> UserOut:
     if db.scalar(select(User.id)) is not None:
@@ -96,9 +101,7 @@ def setup(body: SetupIn, request: Request, response: Response, db: DB) -> UserOu
         literal(_hasher.hash(body.password)),
         literal(utcnow(), DateTime),
     ).where(~select(User.id).exists())
-    result = db.execute(
-        insert(User).from_select(["username", "password_hash", "created_at"], row)
-    )
+    result = db.execute(insert(User).from_select(["username", "password_hash", "created_at"], row))
     if result.rowcount != 1:  # type: ignore[attr-defined]
         db.rollback()
         raise HTTPException(409, "Already set up")

@@ -9,6 +9,7 @@ from lugnut.auth.routes import router as auth_router
 from lugnut.db import get_engine
 from lugnut.migrate import upgrade_database
 from lugnut.settings import Settings
+from lugnut.web import mount_frontend
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -30,4 +31,5 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def health() -> dict[str, str]:
         return {"status": "ok", "version": version("lugnut")}
 
+    mount_frontend(app)  # last, so its catch-all never shadows /api routes
     return app
