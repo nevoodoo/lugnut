@@ -1,0 +1,7 @@
+# Workflows reference actions by tag; .github/workflows/actions.lock pins each
+# tag to a commit and GitHub refuses to run a workflow whose actions don't match it.
+rules:
+  unpinned-uses:
+    config:
+      policies:
+        "*": ref-pin

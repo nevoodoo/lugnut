@@ -42,4 +42,4 @@ git commit --allow-empty -m "chore: release 0.1.0-rc.1" -m "Release-As: 0.1.0-rc
 
 The footer must be the last paragraph. The git tag is `v0.1.0-rc.1`, PyPI and the image use `0.1.0rc1`, the GitHub release is marked as a pre-release, and the image is also tagged `rc` (not `latest`). To publish the final release after a candidate, use `Release-As: 0.1.0` the same way.
 
-Workflow actions are pinned by commit SHA and recorded in `.github/workflows/actions.lock`. Check them with `gh actions-lock --no-fix`. Running `gh actions-lock` without `--no-fix` rewrites SHA pins to tags, so restore the SHAs after refreshing the lock.
+Workflows refer to actions by tag, and `.github/workflows/actions.lock` pins each tag to a commit. GitHub will not run a workflow whose actions are missing from the lockfile. After adding or changing an action, run `gh actions-lock` and commit the updated lockfile. Check it with `gh actions-lock --no-fix`.
