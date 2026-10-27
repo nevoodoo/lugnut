@@ -4,3 +4,13 @@ docs/KICKOFF.md
 CLAUDE.local.md
 .claude/settings.local.json
 .superpowers/
+data/
+dist/
+.venv/
+node_modules/
+src/lugnut/static/
+site/
+__pycache__/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
