@@ -19,5 +19,3 @@ Coming from LubeLogger? See [Coming from LubeLogger](coming-from-lubelogger.md).
 - [Source code and issues](https://github.com/nevoodoo/lugnut)
 - [Release notes](release-notes.md)
 - [Contributing](contributing.md)
-
-Lugnut is open source under the MIT licence.

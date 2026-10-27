@@ -1,10 +1,6 @@
 .git
 .github
-.claude
-.superpowers
-CLAUDE.local.md
-docs/superpowers
-docs/KICKOFF.md
+docs
 data
 dist
 .venv

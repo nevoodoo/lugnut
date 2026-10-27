@@ -12,13 +12,13 @@ docker run -d --name lugnut \
 
 Then open `http://localhost:8080` and create your account.
 
-Only release candidates exist so far, so the examples use the `rc` tag. The `latest` tag appears after the first stable release. Once there is one, pin a version tag such as `0.1.0` if you want upgrades to happen only when you choose.
+There's no release yet. The first release candidate is coming. Once it is out, the examples below use the `rc` tag. The `latest` tag appears after the first stable release. Once there is one, pin a version tag such as `0.1.0` if you want upgrades to happen only when you choose.
 
 ## Plain HTTP and the session cookie
 
 The login cookie is marked Secure by default, so browsers only send it over HTTPS. If you reach Lugnut over plain HTTP, which is common on a home network, set `LUGNUT_SECURE_COOKIES=false` as in the example above. Otherwise login will appear to work and then not stick.
 
-If you put Lugnut behind a reverse proxy that serves HTTPS, leave the setting at its default.
+If you put Lugnut behind a reverse proxy that serves HTTPS, leave the setting at its default. Behind a reverse proxy every client shares one IP for the login backoff, so repeated bad logins from anyone can slow everyone's logins.
 
 ## Compose
 
@@ -62,5 +62,3 @@ Pull the new image and recreate the container. The database is migrated on start
 | `LUGNUT_HOST` | `0.0.0.0` in the image | Address to listen on |
 | `LUGNUT_PORT` | `8080` | Port to listen on |
 | `LUGNUT_SECURE_COOKIES` | `true` | Set to `false` when serving plain HTTP |
-
-How you reach Lugnut from outside your network (VPN, reverse proxy) is up to you.

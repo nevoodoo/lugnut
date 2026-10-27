@@ -1,12 +1,12 @@
 # Lugnut
 
-> **Lugnut is in active development. Use it with caution and keep your own backups.** Right now it only has first-run setup, login and an empty home screen.
+> **Lugnut is in active development. Use it with caution and keep your own backups.** So far it covers first-run setup and login.
 
 A self-hosted vehicle maintenance and running-cost tracker. One process, SQLite, no other services.
 
 ## Quick start
 
-Docker:
+Once the first release candidate is out, you can run it with Docker:
 
 ```sh
 docker run -d --name lugnut -p 8080:8080 -v lugnut-data:/data \
@@ -20,7 +20,9 @@ Or with uv:
 LUGNUT_SECURE_COOKIES=false uvx --prerelease=allow lugnut serve
 ```
 
-Only release candidates exist so far. The `latest` image tag appears after the first stable release, and until then `uvx` needs `--prerelease=allow` (with pip, use `pip install --pre lugnut`); drop the flag once a stable release exists.
+There's no release yet. The first release candidate is coming.
+
+The `latest` image tag appears after the first stable release. Until then, `uvx` needs `--prerelease=allow`. With pip, use `pip install --pre lugnut`. Drop the flag once a stable release exists.
 
 Then open http://localhost:8080. The examples turn off the Secure flag on the session cookie because plain HTTP would otherwise break login. Leave that variable out if you serve HTTPS. See the [install docs](https://nevoodoo.github.io/lugnut/install/docker/) for details.
 

@@ -6,7 +6,9 @@ You need [uv](https://docs.astral.sh/uv/) and Python 3.13 or newer (uv can fetch
 uvx --prerelease=allow lugnut serve
 ```
 
-Then open `http://127.0.0.1:8080` and create your account. You can also `pip install --pre lugnut` and run `lugnut serve`. Only release candidates exist so far, which is why the pre-release flag is needed; drop it once a stable release exists.
+Then open `http://127.0.0.1:8080` and create your account. You can also `pip install --pre lugnut` and run `lugnut serve`.
+
+There's no release yet. The first release candidate is coming. Once it is out, the pre-release flag is needed until a stable release exists.
 
 ## Plain HTTP and the session cookie
 

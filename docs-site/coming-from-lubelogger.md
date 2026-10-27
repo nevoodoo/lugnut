@@ -1,6 +1,6 @@
 # Coming from LubeLogger
 
-!!! note "Planned, arriving in a later release"
+!!! note "Planned"
     The importer is not available yet. This page describes what is planned.
 
 Lugnut will import a whole LubeLogger instance from its backup zip or its API, and show a preview you can correct before anything is saved.

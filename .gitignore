@@ -1,9 +1,3 @@
-# Private working notes, never committed
-docs/superpowers/
-docs/KICKOFF.md
-CLAUDE.local.md
-.claude/settings.local.json
-.superpowers/
 data/
 dist/
 .venv/

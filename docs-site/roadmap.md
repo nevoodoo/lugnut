@@ -1,6 +1,6 @@
 # Roadmap
 
-Lugnut is in active development. Nothing here is available until it shows up in the [release notes](release-notes.md). A release only goes out with finished, usable features.
+Lugnut is in active development. Nothing here is available until it shows up in the [release notes](release-notes.md). Releases only include finished features.
 
 ## Planned for version 1
 
