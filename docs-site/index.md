@@ -5,7 +5,7 @@ A self-hosted vehicle maintenance and running-cost tracker.
 !!! warning "Active development"
     Lugnut is in active development. Use it with caution and keep your own backups. Right now the app only has first-run setup, login and an empty home screen. The [roadmap](roadmap.md) lists what is planned.
 
-Lugnut keeps everything about a vehicle in one place: service and repair history, fuel, registration, insurance, reminders and documents. It runs as a single process with SQLite, so there is nothing else to host.
+Lugnut is meant to keep service and repair history, fuel, registration, insurance, reminders and documents for each vehicle in one place. It runs as a single process with SQLite, so there is nothing else to host.
 
 ## Get started
 

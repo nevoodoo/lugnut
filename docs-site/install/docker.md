@@ -7,12 +7,12 @@ docker run -d --name lugnut \
   -p 8080:8080 \
   -v lugnut-data:/data \
   -e LUGNUT_SECURE_COOKIES=false \
-  ghcr.io/nevoodoo/lugnut:latest
+  ghcr.io/nevoodoo/lugnut:rc
 ```
 
 Then open `http://localhost:8080` and create your account.
 
-Release candidates are tagged `rc` and are not moved to `latest`. Pin a version tag such as `0.1.0` if you want upgrades to happen only when you choose.
+Only release candidates exist so far, so the examples use the `rc` tag. The `latest` tag appears after the first stable release. Once there is one, pin a version tag such as `0.1.0` if you want upgrades to happen only when you choose.
 
 ## Plain HTTP and the session cookie
 
@@ -25,7 +25,7 @@ If you put Lugnut behind a reverse proxy that serves HTTPS, leave the setting at
 ```yaml
 services:
   lugnut:
-    image: ghcr.io/nevoodoo/lugnut:latest
+    image: ghcr.io/nevoodoo/lugnut:rc
     ports:
       - "8080:8080"
     volumes:
@@ -46,7 +46,7 @@ Everything lives in the `/data` volume:
 | --- | --- |
 | `lugnut.db` | The database |
 | `backups/` | Automatic copies of the database, made before each migration |
-| `attachments/` | Uploaded files |
+| `attachments/` | Uploaded files (for attachments, planned) |
 
 The container runs as user 1000. If you use a bind mount instead of a named volume, make the directory writable by that user.
 

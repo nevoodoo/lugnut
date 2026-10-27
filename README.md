@@ -11,14 +11,16 @@ Docker:
 ```sh
 docker run -d --name lugnut -p 8080:8080 -v lugnut-data:/data \
   -e LUGNUT_SECURE_COOKIES=false \
-  ghcr.io/nevoodoo/lugnut:latest
+  ghcr.io/nevoodoo/lugnut:rc
 ```
 
 Or with uv:
 
 ```sh
-LUGNUT_SECURE_COOKIES=false uvx lugnut serve
+LUGNUT_SECURE_COOKIES=false uvx --prerelease=allow lugnut serve
 ```
+
+Only release candidates exist so far. The `latest` image tag appears after the first stable release, and until then `uvx` needs `--prerelease=allow` (with pip, use `pip install --pre lugnut`); drop the flag once a stable release exists.
 
 Then open http://localhost:8080. The examples turn off the Secure flag on the session cookie because plain HTTP would otherwise break login. Leave that variable out if you serve HTTPS. See the [install docs](https://nevoodoo.github.io/lugnut/install/docker/) for details.
 
