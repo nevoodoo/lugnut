@@ -1,13 +1,8 @@
 name: Publish release
 
+# Started by release-please.yml once a release is created, or by hand to re-run
+# a release for an existing tag.
 on:
-  workflow_call:
-    inputs:
-      tag:
-        description: Release tag, for example v0.1.0 or v0.1.0-rc.1
-        required: true
-        type: string
-  # Re-run a release for an existing tag, for example after a failed publish.
   workflow_dispatch:
     inputs:
       tag:
@@ -101,9 +96,6 @@ jobs:
       - uses: pypa/gh-action-pypi-publish@v1.14.3
         with:
           skip-existing: true
-          # PyPI checks these against the workflow that started the run, which is
-          # release-please.yml here. The build job already attests every file.
-          attestations: false
       - id: tags
         run: |
           if [[ "$VERSION" == *rc* ]]; then moving=rc; else moving=latest; fi
