@@ -2,8 +2,11 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from importlib.metadata import version
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 
+from lugnut.attachments.routes import router as attachments_router
+from lugnut.attachments.storage import MAX_BYTES
 from lugnut.auth.ratelimit import LoginLimiter
 from lugnut.auth.routes import router as auth_router
 from lugnut.db import get_engine
@@ -34,6 +37,15 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(vehicles_router)
     app.include_router(records_router)
     app.include_router(job_types_router)
+    app.include_router(attachments_router)
+
+    @app.middleware("http")
+    async def limit_body(request: Request, call_next):  # type: ignore[no-untyped-def]
+        # Early reject on declared length; storage.save enforces the cap while streaming.
+        declared = request.headers.get("content-length", "")
+        if declared.isdigit() and int(declared) > MAX_BYTES + 2**20:
+            return JSONResponse({"detail": "Request too large"}, status_code=413)
+        return await call_next(request)
 
     @app.get("/api/health")
     def health() -> dict[str, str]:

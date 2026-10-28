@@ -1,5 +1,8 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
+from sqlalchemy import select
 
+from lugnut.attachments import storage
+from lugnut.attachments.models import Attachment
 from lugnut.auth.deps import DB
 from lugnut.auth.routes import Reader, Writer
 from lugnut.settings_api import get_install_settings
@@ -49,6 +52,9 @@ def replace_vehicle(vehicle_id: int, body: VehicleIn, _: Writer, db: DB) -> Vehi
 
 
 @router.delete("/{vehicle_id}", status_code=204)
-def delete_vehicle(vehicle_id: int, _: Writer, db: DB) -> None:
-    db.delete(_get(db, vehicle_id))
+def delete_vehicle(vehicle_id: int, request: Request, _: Writer, db: DB) -> None:
+    v = _get(db, vehicle_id)
+    names = list(db.scalars(select(Attachment.stored_name).where(Attachment.vehicle_id == v.id)))
+    db.delete(v)
     db.commit()
+    storage.delete_many(request.app.state.settings, names)

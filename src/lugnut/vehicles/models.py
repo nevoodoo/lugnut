@@ -1,6 +1,6 @@
 from datetime import date, datetime
 
-from sqlalchemy import JSON
+from sqlalchemy import JSON, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
 
 from lugnut.db import Base
@@ -24,7 +24,12 @@ class Vehicle(Base):
     sold_date: Mapped[date | None]
     sold_price: Mapped[int | None]
     odometer_adjustment_km: Mapped[float] = mapped_column(default=0)
-    photo_attachment_id: Mapped[int | None]  # FK added in the attachments migration
+    # use_alter: vehicle and attachment reference each other
+    photo_attachment_id: Mapped[int | None] = mapped_column(
+        ForeignKey(
+            "attachment.id", ondelete="SET NULL", use_alter=True, name="fk_vehicle_photo_attachment"
+        )
+    )
     custom_fields: Mapped[dict[str, str]] = mapped_column(JSON, default=dict)
     archived: Mapped[bool] = mapped_column(default=False)
     created_at: Mapped[datetime]

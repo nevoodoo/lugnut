@@ -1,10 +1,12 @@
 import datetime as dt
 from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Request
 from fastapi.exceptions import RequestValidationError
 from sqlalchemy import select
 
+from lugnut.attachments import storage
+from lugnut.attachments.models import Attachment
 from lugnut.auth.deps import DB, utcnow
 from lugnut.auth.routes import Reader, Writer
 from lugnut.records.models import JobType, Record
@@ -115,6 +117,9 @@ def replace_record(record_id: int, body: RecordIn, _: Writer, db: DB) -> RecordO
 
 
 @router.delete("/records/{record_id}", status_code=204)
-def delete_record(record_id: int, _: Writer, db: DB) -> None:
-    db.delete(_get(db, record_id))
+def delete_record(record_id: int, request: Request, _: Writer, db: DB) -> None:
+    r = _get(db, record_id)
+    names = list(db.scalars(select(Attachment.stored_name).where(Attachment.record_id == r.id)))
+    db.delete(r)
     db.commit()
+    storage.delete_many(request.app.state.settings, names)
