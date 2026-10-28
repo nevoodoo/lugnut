@@ -535,11 +535,6 @@ export interface components {
             /** Record Id */
             record_id?: number | null;
         };
-        /** Body_upload_backup_api_import_lubelogger_post */
-        Body_upload_backup_api_import_lubelogger_post: {
-            /** File */
-            file: string;
-        };
         /** CompleteIn */
         CompleteIn: {
             /** Date */
@@ -2124,7 +2119,10 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "multipart/form-data": components["schemas"]["Body_upload_backup_api_import_lubelogger_post"];
+                "multipart/form-data": {
+                    /** Format: binary */
+                    file: string;
+                };
             };
         };
         responses: {
@@ -2137,15 +2135,6 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

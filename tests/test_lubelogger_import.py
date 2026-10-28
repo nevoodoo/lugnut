@@ -1,11 +1,22 @@
 import io
 import zipfile
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
 from conftest import CSRF
+from sqlalchemy import func, select
+from starlette.requests import Request
+
+from lugnut.attachments.models import Attachment
+from lugnut.lubelogger import routes
+from lugnut.lubelogger.mapper import build_plan
+from lugnut.records.models import Record
+from lugnut.reminders.models import Reminder
+from lugnut.vehicles.models import Vehicle
 
 FIXTURE = Path(__file__).parent / "fixtures" / "lubelogger_demo.zip"
+TABLES = (Vehicle, Record, Reminder, Attachment)
 
 
 @pytest.fixture(autouse=True)
@@ -69,6 +80,12 @@ def demo_with_plate(plate: bytes) -> bytes:
     return buf.getvalue()
 
 
+def archive_vehicle(client, vid: int) -> None:
+    v = client.get(f"/api/vehicles/{vid}").json()
+    res = client.put(f"/api/vehicles/{vid}", json={**v, "archived": True}, headers=CSRF)
+    assert res.status_code == 200, res.text
+
+
 def zip_with_member(name: str, data: bytes) -> bytes:
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
@@ -77,7 +94,8 @@ def zip_with_member(name: str, data: bytes) -> bytes:
 
 
 def bomb_zip() -> bytes:
-    return zip_with_member("data/cartracker.db", b"\0" * (101 * 2**20))
+    # a member the import reads, over the 100 MiB cap
+    return zip_with_member("documents/x.pdf", b"\0" * (101 * 2**20))
 
 
 def test_import_demo_end_to_end(client, data_dir):
@@ -117,16 +135,32 @@ def test_second_import_adds_nothing(client):
     tok = upload(client, demo_with_plate(b"THIRDCAR")).json()["token"]
     res = client.post(f"/api/import/lubelogger/{tok}/preview", json=bad, headers=CSRF)
     assert res.status_code == 422 and "vehicle_map" in res.json()["detail"][0]["loc"]
+    # archived cars: never suggested by plate, still found as a re-import of the same car
+    archive_vehicle(client, mine.json()["id"])
+    assert (
+        upload(client, demo_with_plate(b"HANDMADE")).json()["summary"][0]["matched_vehicle_id"]
+        is None
+    )
+    archive_vehicle(client, first)
+    pv = upload_demo(client)["summary"][0]
+    assert (pv["matched_vehicle_id"], pv["matched_vehicle_archived"]) == (first, True)
+    assert pv["matched_vehicle_name"] == "1992 Jeep Cherokee"
+    # source_id alone decides only when neither side has a plate or VIN
+    other = next(v for v in client.get("/api/vehicles").json() if v["plate"] == "OTHERCAR")
+    res = client.put(f"/api/vehicles/{other['id']}", json={**other, "plate": None}, headers=CSRF)
+    assert res.status_code == 200, res.text
+    pv = upload(client, demo_with_plate(b"OTHERCAR")).json()["summary"][0]
+    assert pv["matched_vehicle_id"] is None
 
 
-def test_malicious_zip_rejected(client, data_dir):
-    # catches: zip slip, zip bombs, non-LiteDB uploads
+def test_malicious_zip_rejected(client, data_dir, monkeypatch):
+    # catches: zip slip, zip bombs, non-LiteDB uploads, reading the body before the login check
     for z in (
-        zip_with_member("../../evil.txt", b"x"),
+        zip_with_member("documents/../../evil.txt", b"x"),
         zip_with_member("data/cartracker.db", b"not litedb"),
-        bomb_zip(),
     ):
-        assert upload(client, z).status_code in (413, 422)
+        assert upload(client, z).status_code == 422
+    assert upload(client, bomb_zip()).status_code == 413
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w") as zf:
         for i in range(50_001):
@@ -135,3 +169,62 @@ def test_malicious_zip_rejected(client, data_dir):
     assert not (data_dir.parent / "evil.txt").exists()
     assert not (data_dir / "evil.txt").exists()
     assert not any((data_dir / "imports").iterdir())
+    read = []
+    monkeypatch.setattr(Request, "form", lambda *a, **k: read.append(1))
+    client.cookies.clear()
+    assert upload(client, FIXTURE.read_bytes()).status_code == 401 and not read
+
+
+def test_commit_copies_record_files_and_rolls_back(client, data_dir, db_session, monkeypatch):
+    # catches: files on the wrong record, a failed commit leaving rows/files or eating the
+    # upload, reminder distances stored in the source's miles
+    when = datetime(2020, 1, 2, tzinfo=UTC)
+    cols = {
+        "vehicles": [{"_id": 1, "Year": 2010, "Make": "Ford", "Model": "Falcon"}],
+        "servicerecords": [
+            {
+                "_id": 1,
+                "VehicleId": 1,
+                "Date": when,
+                "Mileage": 1000,
+                "Description": "Oil",
+                "Files": [{"Name": "inv.pdf", "Location": "/documents/inv.pdf"}],
+            }
+        ],
+        "reminderrecords": [
+            {"_id": i, "VehicleId": 1, "Metric": "Odometer", "Mileage": 5000, "Description": "Oil"}
+            for i in (1, 2)
+        ],
+    }
+    plan = build_plan(cols, {"UseMPG": True}, {})
+    monkeypatch.setattr(routes, "_load_plan", lambda d, opts: plan)
+    token = "ab" * 16
+    d = data_dir / "imports" / token
+    (d / "documents").mkdir(parents=True)
+    (d / "documents" / "inv.pdf").write_bytes(b"%PDF-1.4\n" + b"x" * 100)
+    url = f"/api/import/lubelogger/{token}/commit"
+
+    real, calls = routes.insert_reminder, []
+
+    def fail_on_second(*a, **k):
+        calls.append(1)
+        if len(calls) == 2:
+            raise RuntimeError("boom")
+        return real(*a, **k)
+
+    monkeypatch.setattr(routes, "insert_reminder", fail_on_second)
+    with pytest.raises(RuntimeError):
+        client.post(url, json={}, headers=CSRF)
+    counts = [db_session.scalar(select(func.count()).select_from(m)) for m in TABLES]
+    assert counts == [0, 0, 0, 0]
+    assert not any(client.app.state.settings.attachments_dir.glob("**/*.*"))
+    assert (d / "documents" / "inv.pdf").is_file()
+
+    monkeypatch.setattr(routes, "insert_reminder", real)
+    res = client.post(url, json={}, headers=CSRF)
+    assert res.status_code == 200, res.text
+    rec = db_session.scalars(select(Record)).one()
+    att = db_session.scalars(select(Attachment)).one()
+    assert (att.record_id, att.filename) == (rec.id, "inv.pdf")
+    due = db_session.scalars(select(Reminder.due_km)).all()
+    assert due == [pytest.approx(5000 * 1.609344)] * 2

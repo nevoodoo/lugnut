@@ -19,7 +19,15 @@ interface Options {
 }
 interface Preview {
   token: string;
-  summary: { source_id: string; name: string; plate: string | null; matched_vehicle_id: number | null; counts: Record<string, number> }[];
+  summary: {
+    source_id: string;
+    name: string;
+    plate: string | null;
+    matched_vehicle_id: number | null;
+    matched_vehicle_name: string | null;
+    matched_vehicle_archived: boolean;
+    counts: Record<string, number>;
+  }[];
   warnings: string[];
   skipped: Record<string, number>;
   guesses: { date_order: string; source_timezone: string };
@@ -76,6 +84,7 @@ const label = (k: string) => k.replace(/(\w)records$/, "$1 records");
 export function ImportLubeLogger() {
   const settings = useSettings().data;
   const vehicles = useVehicles().data ?? [];
+  const archived = useVehicles(true).data ?? [];
   const qc = useQueryClient();
   const [pct, setPct] = useState<number | null>(null);
   const [preview, setPreview] = useState<Preview | null>(null);
@@ -161,8 +170,8 @@ export function ImportLubeLogger() {
         <div ref={resultRef} tabIndex={-1} className="result">
         <Card label="Imported">
           <p>
-            Added {result.created.vehicles} vehicles, {result.created.records} records, {result.created.reminders} reminders and{" "}
-            {result.created.attachments} files. {sum(result.skipped_existing)} were already here and left alone.
+            Added {one(result.created.vehicles, "vehicles")}, {one(result.created.records, "records")},{" "}
+            {one(result.created.reminders, "reminders")} and {one(result.created.attachments, "files")}. {sum(result.skipped_existing)} were already here and left alone.
           </p>
           {result.warnings.length > 0 && (
             <ul>
@@ -246,7 +255,7 @@ export function ImportLubeLogger() {
                 </thead>
                 <tbody>
                   {preview.summary.map((v) => {
-                    const match = vehicles.find((x) => x.id === v.matched_vehicle_id);
+                    const match = v.matched_vehicle_name && `Matches ${v.matched_vehicle_name}${v.matched_vehicle_archived ? " (archived)" : ""}`;
                     return (
                       <tr key={v.source_id}>
                         <td>
@@ -260,7 +269,7 @@ export function ImportLubeLogger() {
                           </p>
                         </td>
                         <td>
-                          <p className="muted">{match ? `Matches ${match.name}` : "Will be added as a new vehicle"}</p>
+                          <p className="muted">{match || "Will be added as a new vehicle"}</p>
                           <select
                             aria-label={`Where ${v.name} goes`}
                             value={v.matched_vehicle_id ?? "new"}
@@ -275,6 +284,15 @@ export function ImportLubeLogger() {
                                 {x.name}
                               </option>
                             ))}
+                            {archived.length > 0 && (
+                              <optgroup label="Archived">
+                                {archived.map((x) => (
+                                  <option key={x.id} value={x.id}>
+                                    {x.name}
+                                  </option>
+                                ))}
+                              </optgroup>
+                            )}
                           </select>
                         </td>
                       </tr>

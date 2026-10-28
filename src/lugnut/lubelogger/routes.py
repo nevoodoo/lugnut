@@ -8,14 +8,17 @@ import secrets
 import shutil
 import time
 from collections import Counter
-from typing import Any, Literal
+from typing import Any, BinaryIO, Literal
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-from fastapi import APIRouter, HTTPException, Request, UploadFile
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from pydantic import BaseModel, ConfigDict, ValidationError, field_validator
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+from starlette.concurrency import run_in_threadpool
+from starlette.datastructures import UploadFile as StarletteUploadFile
+from starlette.requests import ClientDisconnect
 
 from lugnut.attachments import storage
 from lugnut.attachments.models import Attachment
@@ -140,8 +143,9 @@ def match_vehicle(
     """The Lugnut vehicle this source vehicle goes into, or None to add it as new.
 
     A hand-picked mapping wins. Otherwise a vehicle imported earlier with this source_id that is
-    the same car: source_id alone isn't enough (ids restart at 1 in every LubeLogger install), so
-    the plate or VIN must match; with neither on both sides, source_id decides."""
+    the same car, archived or not: source_id alone isn't enough (ids restart at 1 in every
+    LubeLogger install), so the plate or VIN must match; only when neither side has a plate or a
+    VIN does source_id decide. Failing that, an active vehicle with the same plate or VIN."""
     chosen = vehicle_map.get(pv.source_id)
     if chosen == "new":
         return None
@@ -152,11 +156,10 @@ def match_vehicle(
     )
     for v in rows:
         pairs = [(_norm(getattr(v, k)), _norm(pv.vehicle.get(k))) for k in ("plate", "vin")]
-        compared = [a == b for a, b in pairs if a and b]
-        if not compared or any(compared):
+        if any(a and a == b for a, b in pairs) or not any(a or b for a, b in pairs):
             return v
     # a car added by hand: suggest it when the plate or VIN is the same
-    for v in db.scalars(select(Vehicle).order_by(Vehicle.id)):
+    for v in db.scalars(select(Vehicle).where(~Vehicle.archived).order_by(Vehicle.id)):
         for k in ("plate", "vin"):
             if _norm(getattr(v, k)) and _norm(getattr(v, k)) == _norm(pv.vehicle.get(k)):
                 return v
@@ -178,6 +181,8 @@ def _preview(
                 "name": pv.vehicle["name"],
                 "plate": pv.vehicle.get("plate"),
                 "matched_vehicle_id": match.id if match else None,
+                "matched_vehicle_name": match.name if match else None,
+                "matched_vehicle_archived": match.archived if match else False,
                 "counts": {
                     **Counter(r["type"] for r in pv.records),
                     "reminders": len(pv.reminders),
@@ -200,16 +205,45 @@ def _preview(
     }
 
 
-@router.post("")
-def upload_backup(file: UploadFile, request: Request, _: Writer, db: DB) -> dict[str, Any]:
-    settings: Settings = request.app.state.settings
+_UPLOAD_BODY = {
+    "required": True,
+    "content": {
+        "multipart/form-data": {
+            "schema": {
+                "type": "object",
+                "required": ["file"],
+                "properties": {"file": {"type": "string", "format": "binary"}},
+            }
+        }
+    },
+}
+
+
+@router.post("", openapi_extra={"requestBody": _UPLOAD_BODY})
+async def upload_backup(request: Request, _: Writer, db: DB) -> dict[str, Any]:
+    # No file parameter: FastAPI would spool the whole body to disk before Writer runs. Here the
+    # body is read only once the login has been checked. BodyLimit still caps it at 1 GiB.
+    try:
+        form = await request.form()
+    except ClientDisconnect:  # BodyLimit cut it off and has already answered 413
+        raise HTTPException(413, "Request too large") from None
+    try:
+        file = form.get("file")
+        if not isinstance(file, StarletteUploadFile):
+            raise _bad_file("Field required")
+        return await run_in_threadpool(_extract_and_plan, request.app.state.settings, db, file.file)
+    finally:
+        await form.close()
+
+
+def _extract_and_plan(settings: Settings, db: Session, src: BinaryIO) -> dict[str, Any]:
     sweep_imports(settings)
     settings.imports_dir.mkdir(parents=True, exist_ok=True)
     token = secrets.token_hex(16)
     d = os.path.join(str(settings.imports_dir.resolve()), token)
     os.mkdir(d)
     try:
-        archive.extract(file.file, d)
+        archive.extract(src, d)
         plan = _load_plan(d, ImportOptions())
     except archive.ArchiveError as e:
         shutil.rmtree(d, ignore_errors=True)
