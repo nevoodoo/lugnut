@@ -23,6 +23,7 @@ RecordType = Literal[
     "note",
 ]
 UNDATED = {"todo", "note"}
+SERVER_FIELDS = {"id", "vehicle_id", "created_at", "updated_at"}
 
 
 class LineItemIn(BaseModel):
@@ -141,6 +142,14 @@ class RecordIn(RecordFields):
     model_config = ConfigDict(extra="forbid")
 
     details: Any = Field(default_factory=dict, validate_default=True)
+
+    @model_validator(mode="before")
+    @classmethod
+    def _drop_server_fields(cls, data: Any) -> Any:
+        # A GET body must PUT back as-is, so ignore the keys the server sets.
+        if isinstance(data, dict):
+            return {k: v for k, v in data.items() if k not in SERVER_FIELDS}
+        return data
 
     @field_validator("date")
     @classmethod

@@ -106,6 +106,7 @@ def test_work_record_put_round_trips_line_items_and_details(client, vehicle):
     client.put(f"/api/records/{r['id']}", json=WORK_WITH_THREE_LINES_EDITED, headers=CSRF)
     got = client.get(f"/api/records/{r['id']}").json()
     assert strip_ids(got) == WORK_WITH_THREE_LINES_EDITED
+    assert client.put(f"/api/records/{r['id']}", json=got, headers=CSRF).status_code == 200
 
 
 def test_fuel_volume_converted_and_required(client, vehicle_gal_us):
