@@ -2,9 +2,12 @@ import { useQuery } from "@tanstack/react-query";
 import { Navigate, Route, Routes } from "react-router";
 import { api, ApiError, type User } from "./api/client";
 import { Shell } from "./app/Shell";
-import { Home } from "./pages/Home";
+import { Garage } from "./pages/Garage";
+import { HomeRedirect } from "./pages/HomeRedirect";
 import { Login } from "./pages/Login";
 import { Setup } from "./pages/Setup";
+import { VehicleForm } from "./pages/VehicleForm";
+import { VehicleHome } from "./pages/VehicleHome";
 
 export function App() {
   const me = useQuery({
@@ -30,7 +33,11 @@ export function App() {
   return (
     <Routes>
       <Route element={<Shell user={user} />}>
-        <Route index element={<Home />} />
+        <Route index element={<HomeRedirect />} />
+        <Route path="garage" element={<Garage />} />
+        <Route path="vehicles/new" element={<VehicleForm />} />
+        <Route path="vehicles/:id" element={<VehicleHome />} />
+        <Route path="vehicles/:id/edit" element={<VehicleForm />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

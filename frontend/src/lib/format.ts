@@ -44,3 +44,10 @@ export function formatDistance(n: number | null, unit: "km" | "mi"): string {
 export function formatVolume(n: number | null, s: Pick<InstallSettings, "volume_unit">): string {
   return n === null ? "" : `${digits(n, 2)} ${unitLabel(s.volume_unit)}`;
 }
+
+// Minor units back to decimal text for an input ("1250" -> "12.50"); the inverse of parseMoney.
+export function moneyToText(minor: number | null | undefined, currency: string): string {
+  if (minor == null) return "";
+  const d = currencyDigits(currency);
+  return (minor / 10 ** d).toFixed(d);
+}
