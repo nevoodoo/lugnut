@@ -31,6 +31,16 @@ test("required flow: add vehicle, log fuel, reminder fires", async ({ page }) =>
   await expect(page.getByRole("heading", { name: "Daily Civic" })).toBeVisible();
   await expect(page.getByText("12,345").first()).toBeVisible();
 
+  // Reload and open the saved fill: this is what the server stored
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Australia/Sydney" }).format(new Date());
+  await page.reload();
+  await page.locator("a.rec").first().click();
+  await expect(page.getByLabel("Date")).toHaveValue(today);
+  await expect(page.getByLabel(/^Volume/)).toHaveValue("40");
+  await expect(page.getByLabel("Cost", { exact: true })).toHaveValue("62.50");
+  await expect(page.getByLabel(/^Odometer/)).toHaveValue("12345");
+  await expect(page.getByLabel("Filled the tank")).toBeChecked();
+
   // Reopen the vehicle and check every field
   await page.goto(`${vehicleUrl}/edit`);
   await expect(page.getByLabel("Name")).toHaveValue("Daily Civic");
@@ -45,7 +55,7 @@ test("required flow: add vehicle, log fuel, reminder fires", async ({ page }) =>
   // Reminder due today
   await page.goto(`${vehicleUrl}/reminders/new`);
   await page.getByLabel("Title").fill("Oil change");
-  await page.getByLabel("Due date").fill(new Date().toLocaleDateString("en-CA"));
+  await page.getByLabel("Due date").fill(today);
   await page.getByRole("button", { name: "Save" }).click();
   await page.goto(vehicleUrl);
   await expect(page.getByText("Oil change")).toBeVisible();
@@ -54,6 +64,6 @@ test("required flow: add vehicle, log fuel, reminder fires", async ({ page }) =>
   // The API agrees
   const res = await page.request.get("/api/reminders");
   expect(res.ok()).toBeTruthy();
-  const reminders = await res.json();
-  expect(JSON.stringify(reminders)).toContain('"state":"due"');
+  const reminders: { title: string; state: string }[] = await res.json();
+  expect(reminders.find((r) => r.title === "Oil change")?.state).toBe("due");
 });
