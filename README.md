@@ -26,6 +26,8 @@ The `latest` image tag appears after the first stable release. Until then, `uvx`
 
 Then open http://localhost:8080. The examples turn off the Secure flag on the session cookie because plain HTTP would otherwise break login. Leave that variable out if you serve HTTPS. See the [install docs](https://nevoodoo.github.io/lugnut/install/docker/) for details.
 
+On Proxmox, a script creates the LXC container and installs Lugnut in one command. See the [Proxmox install page](https://nevoodoo.github.io/lugnut/install/proxmox/).
+
 ## Docs
 
 https://nevoodoo.github.io/lugnut, including the [roadmap](https://nevoodoo.github.io/lugnut/roadmap/).

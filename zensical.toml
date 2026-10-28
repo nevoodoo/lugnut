@@ -12,6 +12,7 @@ nav = [
   { "Install" = [
     { "Docker" = "install/docker.md" },
     { "Local" = "install/local.md" },
+    { "Proxmox" = "install/proxmox.md" },
   ] },
   { "Coming from LubeLogger" = "coming-from-lubelogger.md" },
   { "Roadmap" = "roadmap.md" },
