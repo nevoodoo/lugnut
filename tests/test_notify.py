@@ -40,6 +40,7 @@ def test_notifies_once_per_state_and_retries_failures(client, vehicle, db_sessio
 def test_webhook_url_is_secret_and_restricted(client, logged_in):
     # catches: leaking the webhook via the API, and SSRF to arbitrary hosts
     assert set_webhook(client, "http://169.254.169.254/x").status_code == 422
+    assert set_webhook(client, "https://discord.com/api/webhooks/1/a b").status_code == 422
     assert set_webhook(client, "https://discord.com/api/webhooks/1/abc").status_code == 200
     s = client.get("/api/settings").json()
     assert s["discord_webhook_set"] is True and "abc" not in str(s)

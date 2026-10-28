@@ -18,7 +18,7 @@ from lugnut.reminders.schemas import (
 )
 from lugnut.reminders.state import RANK, State, add_months
 from lugnut.settings_api import get_install_settings
-from lugnut.units import km_from
+from lugnut.units import km_from, km_to
 from lugnut.vehicles.models import Vehicle
 from lugnut.vehicles.odometer import current_odometer_km
 from lugnut.vehicles.schemas import effective_unit
@@ -105,7 +105,12 @@ def replace_reminder(reminder_id: int, body: ReminderIn, _: Writer, db: DB) -> R
             raise RequestValidationError(errors)
     unit = effective_unit(_get_vehicle(db, r.vehicle_id).distance_unit, get_install_settings(db))
     values = to_row_values(body, unit)
-    if values["due_date"] != r.due_date or values["due_km"] != r.due_km:
+    moved_km = (values["due_km"] is None) != (r.due_km is None) or (
+        values["due_km"] is not None
+        and r.due_km is not None
+        and abs(km_to(values["due_km"], unit) - km_to(r.due_km, unit)) > 0.05
+    )
+    if values["due_date"] != r.due_date or moved_km:
         r.notified_state = None  # a moved due point earns a fresh notification
     for k, val in values.items():
         setattr(r, k, val)

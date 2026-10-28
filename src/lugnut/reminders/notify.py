@@ -13,9 +13,9 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 
 from lugnut.reminders.models import Reminder
-from lugnut.reminders.state import due_state
+from lugnut.reminders.state import RANK, _by_date, _by_km, due_state
 from lugnut.reminders.state import today as utc_today
-from lugnut.settings_api import get_install_settings, get_webhook_url, validate_webhook_url
+from lugnut.settings_api import get_install_settings, get_webhook_url, is_discord_webhook
 from lugnut.units import km_to
 from lugnut.vehicles.models import Vehicle
 from lugnut.vehicles.odometer import current_odometer_km
@@ -34,7 +34,8 @@ class _NoRedirect(urllib.request.HTTPRedirectHandler):
 
 
 def discord_send(url: str, payload: dict[str, Any]) -> None:
-    validate_webhook_url(url)
+    if not is_discord_webhook(url):
+        raise NotifyError("Not a Discord webhook URL")
     req = urllib.request.Request(  # noqa: S310 (host checked above)
         url,
         data=json.dumps(payload).encode(),
@@ -51,6 +52,8 @@ def discord_send(url: str, payload: dict[str, Any]) -> None:
         raise NotifyError("Could not reach Discord") from None
     except OSError:
         raise NotifyError("Network error") from None
+    except Exception:  # e.g. http.client.InvalidURL, whose message carries the URL
+        raise NotifyError("Send failed") from None
 
 
 def _fmt_date(d: Any, pattern: str) -> str:
@@ -74,7 +77,9 @@ def check_and_notify(db: Session, today: date, send: Callable[[str, dict[str, An
         if notify not in ("soon", "overdue") or notify == r.notified_state:
             continue
         label = f"{v.name} ({v.plate})" if v.plate else v.name
-        if r.due_date:
+        odo = current_odometer_km(db, v)
+        km_drives = r.due_km is not None and RANK[_by_km(r, odo)] > RANK[_by_date(r, today)]
+        if r.due_date and not km_drives:
             due = _fmt_date(r.due_date, install.date_format)
         elif r.due_km is not None:
             unit = effective_unit(v.distance_unit, install)
@@ -84,7 +89,7 @@ def check_and_notify(db: Session, today: date, send: Callable[[str, dict[str, An
         word = "overdue" if notify == "overdue" else "due soon"
         text = f"{r.title} for {label} is {word}: due {due}."
         try:
-            send(url, {"content": text, "allowed_mentions": {"parse": []}})
+            send(url, {"content": text[:2000], "allowed_mentions": {"parse": []}})
         except Exception as e:  # noqa: BLE001  the URL must not reach the log
             log.warning("reminder %s not sent: %s", r.id, type(e).__name__)
             continue

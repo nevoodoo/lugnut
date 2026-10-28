@@ -33,12 +33,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             loop = asyncio.create_task(
                 reminder_loop(_app.state.engine, settings.reminder_interval_seconds)
             )
-        yield
-        if loop:
-            loop.cancel()
-            with contextlib.suppress(asyncio.CancelledError):
-                await loop
-        _app.state.engine.dispose()
+        try:
+            yield
+        finally:
+            if loop:
+                loop.cancel()
+                with contextlib.suppress(asyncio.CancelledError):
+                    await loop
+            _app.state.engine.dispose()
 
     app = FastAPI(title="Lugnut", lifespan=lifespan)
     app.add_middleware(BodyLimit)

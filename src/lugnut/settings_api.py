@@ -1,4 +1,5 @@
 import json
+import re
 from importlib.resources import files
 from typing import Any, Literal
 from urllib.parse import urlsplit
@@ -61,28 +62,29 @@ def _bad(field: str, msg: str, value: Any) -> RequestValidationError:
     )
 
 
-def validate_webhook_url(url: str) -> str:
+WEBHOOK_PATH = re.compile(r"/api/webhooks/\d+/[A-Za-z0-9_-]+", re.ASCII)
+WEBHOOK_HOSTS = ("discord.com", "discordapp.com", "ptb.discord.com", "canary.discord.com")
+
+
+def is_discord_webhook(url: str) -> bool:
     """Only Discord webhook URLs, so the server can't be pointed at arbitrary hosts (SSRF)."""
+    if any(c.isspace() or not c.isprintable() for c in url):
+        return False  # urlsplit would silently strip some of these
     try:
         u = urlsplit(url)
         port = u.port
     except ValueError:
-        raise _bad("url", "Not a valid URL", "") from None
-    host = u.hostname or ""
-    host_ok = host in ("discord.com", "discordapp.com") or host in (
-        "ptb.discord.com",
-        "canary.discord.com",
+        return False
+    return (
+        u.scheme == "https"
+        and u.hostname in WEBHOOK_HOSTS
+        and u.username is None
+        and u.password is None
+        and port in (None, 443)
+        and not u.query
+        and not u.fragment
+        and WEBHOOK_PATH.fullmatch(u.path) is not None
     )
-    if (
-        u.scheme != "https"
-        or not host_ok
-        or u.username is not None
-        or u.password is not None
-        or port not in (None, 443)
-        or not u.path.startswith("/api/webhooks/")
-    ):
-        raise _bad("url", "Must be a https://discord.com/api/webhooks/... URL", "")
-    return url
 
 
 def get_webhook_url(db: Session) -> str | None:
@@ -148,7 +150,9 @@ def set_discord(body: DiscordIn, _: Writer, db: DB) -> SettingsOut:
         if row:
             db.delete(row)
     else:
-        url = validate_webhook_url(body.url)
+        url = body.url
+        if not is_discord_webhook(url):
+            raise _bad("url", "Must be a https://discord.com/api/webhooks/... URL", "")
         if row:
             row.value = url
         else:
