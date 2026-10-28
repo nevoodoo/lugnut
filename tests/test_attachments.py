@@ -30,6 +30,8 @@ def test_upload_returns_object_and_never_escapes_dir(client, vehicle, data_dir):
     # catches: JSON-quoted string responses (LubeLogger) and path traversal via filename
     r = upload(client, vehicle, name="../../evil.png", body=PNG_BYTES)
     assert isinstance(r.json(), dict) and r.json()["filename"] == "evil.png"
+    assert client.get(f"/api/vehicles/{vehicle}/attachments").json() == [r.json()]
+    assert client.get("/api/vehicles/9999/attachments").status_code == 404
     assert list((data_dir / "attachments").iterdir())  # stored inside
     assert not (data_dir.parent / "evil.png").exists()
     assert client.get(f"/api/attachments/{r.json()['id']}/file").content == PNG_BYTES

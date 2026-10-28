@@ -12,6 +12,7 @@ export type JobType = S["JobTypeOut"];
 export type Reminder = S["ReminderOut"];
 export type ReminderIn = S["ReminderIn"];
 export type Token = S["TokenOut"];
+export type Attachment = S["AttachmentOut"];
 
 export interface RecordFilters {
   type?: S["RecordOut"]["type"];
@@ -51,7 +52,8 @@ export const useReminders = (filters: ReminderFilters = {}) =>
   useGet<Reminder[]>(["reminders", filters], `/reminders${qs(filters)}`);
 export const useReminder = (id: number) => useGet<Reminder>(["reminders", "one", id], `/reminders/${id}`, id > 0);
 export const useTokens = () => useGet<Token[]>(["tokens"], "/tokens");
-// ponytail: no GET list for a vehicle's attachments exists yet; add the endpoint and a hook when a screen needs it.
+export const useAttachments = (vehicleId: number) =>
+  useGet<Attachment[]>(["attachments", vehicleId], `/vehicles/${vehicleId}/attachments`, vehicleId > 0);
 
 // ---- mutations ----
 // Each one takes its invalidation list up front; a prefix key refreshes every variant under it.
@@ -103,9 +105,9 @@ export const useUpload = () =>
     form.append("file", file);
     if (recordId !== undefined) form.append("record_id", String(recordId));
     return api<S["AttachmentOut"]>(`/vehicles/${vehicleId}/attachments`, "POST", form);
-  }, [["records"], ["record"]]);
+  }, [["records"], ["record"], ["attachments"]]);
 export const useDeleteAttachment = () =>
-  useWrite((id: number) => api<void>(`/attachments/${id}`, "DELETE"), [["records"], ["record"]]);
+  useWrite((id: number) => api<void>(`/attachments/${id}`, "DELETE"), [["records"], ["record"], ["attachments"]]);
 export const useCreateJobType = () =>
   useWrite((name: string) => api<JobType>("/job-types", "POST", { name }), [["job-types"]]);
 export const useSetPhoto = () =>
@@ -144,3 +146,11 @@ export const useCreateToken = () =>
   useWrite((body: S["TokenIn"]) => api<S["TokenCreated"]>("/tokens", "POST", body), [["tokens"]]);
 export const useRevokeToken = () =>
   useWrite((id: number) => api<void>(`/tokens/${id}`, "DELETE"), [["tokens"]]);
+
+export function useLogout() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => api("/auth/logout", "POST"),
+    onSuccess: () => qc.setQueryData(["me"], null),
+  });
+}

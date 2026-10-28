@@ -1,4 +1,4 @@
-import { Fuel, Gauge, Pencil, Receipt } from "lucide-react";
+import { FileText, Fuel, Gauge, Pencil, Receipt } from "lucide-react";
 import { useEffect } from "react";
 import { Link, Navigate, useParams } from "react-router";
 import { useReminders, useRecords, useSettings, useVehicle } from "../api/hooks";
@@ -94,6 +94,9 @@ export function VehicleHome() {
             </Link>
             <Link className="btn" to={`/vehicles/${id}/edit`}>
               <Pencil size={18} aria-hidden="true" /> Edit
+            </Link>
+            <Link className="btn" to={`/documents?vehicle=${id}`}>
+              <FileText size={18} aria-hidden="true" /> Documents
             </Link>
             <PhotoUpload vehicleId={id} hasPhoto={hasPhoto} />
           </div>

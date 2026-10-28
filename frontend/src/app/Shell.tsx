@@ -1,16 +1,14 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Bell, Car, House, List, LogOut, Plus, X } from "lucide-react";
+import { Bell, Car, FileText, House, List, LogOut, Plus, Settings, X } from "lucide-react";
 import { useRef } from "react";
 import { Link, NavLink, Outlet, useMatch } from "react-router";
-import { api, type User } from "../api/client";
-import { useVehicles } from "../api/hooks";
+import type { User } from "../api/client";
+import { useLogout, useVehicles } from "../api/hooks";
 import { Photo } from "../components/Photo";
 import { PlateBadge } from "../components/PlateBadge";
 import { TypePicker } from "../components/TypePicker";
 import { getLastVehicle } from "../lib/lastVehicle";
 
 export function Shell({ user }: { user: User }) {
-  const qc = useQueryClient();
   const vehicles = useVehicles();
   const onVehicle = useMatch("/vehicles/:id");
   const inVehicle = useMatch("/vehicles/:id/*");
@@ -19,10 +17,7 @@ export function Shell({ user }: { user: User }) {
   // The vehicle on screen, else the last one viewed, else the first. "+" and Records act on it.
   const ids = vehicles.data?.map((v) => v.id) ?? [];
   const current = [Number(inVehicle?.params.id), getLastVehicle()].find((n) => n !== null && ids.includes(n)) ?? ids[0];
-  const logout = useMutation({
-    mutationFn: () => api("/auth/logout", "POST"),
-    onSuccess: () => qc.setQueryData(["me"], null),
-  });
+  const logout = useLogout();
   // Only sections that exist. Add the rest here as they are built.
   // "/" redirects to the last vehicle, so Home also counts as active on any vehicle page.
   const home = (
@@ -49,6 +44,18 @@ export function Shell({ user }: { user: User }) {
       Garage
     </NavLink>
   );
+  const documents = (
+    <NavLink to="/documents" className="nav-link">
+      <FileText size={20} aria-hidden="true" />
+      Documents
+    </NavLink>
+  );
+  const settings = (
+    <NavLink to="/settings" className="nav-link">
+      <Settings size={20} aria-hidden="true" />
+      Settings
+    </NavLink>
+  );
   const add = (className: string, text?: string) =>
     current !== undefined && (
       <button className={className} onClick={() => picker.current?.showModal()} aria-label={text ? undefined : "Add record"}>
@@ -67,7 +74,12 @@ export function Shell({ user }: { user: User }) {
     <div className="shell">
       <header className="topbar">
         <span className="brand">Lugnut</span>
-        {signOut}
+        <div className="actions">
+          <NavLink to="/settings" className="icon-btn" aria-label="Settings">
+            <Settings size={20} aria-hidden="true" />
+          </NavLink>
+          {signOut}
+        </div>
       </header>
       <aside className="sidebar">
         <span className="brand">Lugnut</span>
@@ -100,7 +112,9 @@ export function Shell({ user }: { user: User }) {
           {home}
           {records}
           {reminders}
+          {documents}
           {garage}
+          {settings}
         </nav>
         <div className="spacer">
           {add("btn primary add-record", "Add record")}

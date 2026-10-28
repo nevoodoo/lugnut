@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Navigate, Route, Routes } from "react-router";
 import { api, ApiError, type User } from "./api/client";
 import { Shell } from "./app/Shell";
+import { Documents } from "./pages/Documents";
 import { Garage } from "./pages/Garage";
 import { HomeRedirect } from "./pages/HomeRedirect";
 import { Login } from "./pages/Login";
@@ -10,6 +11,7 @@ import { RecordForm } from "./pages/RecordForm";
 import { Records } from "./pages/Records";
 import { ReminderForm } from "./pages/ReminderForm";
 import { Reminders } from "./pages/Reminders";
+import { Settings } from "./pages/Settings";
 import { Setup } from "./pages/Setup";
 import { VehicleForm } from "./pages/VehicleForm";
 import { VehicleHome } from "./pages/VehicleHome";
@@ -49,6 +51,8 @@ export function App() {
         <Route path="vehicles/:id/reminders/new" element={<ReminderForm />} />
         <Route path="reminders" element={<Reminders />} />
         <Route path="reminders/:reminderId" element={<ReminderForm />} />
+        <Route path="documents" element={<Documents />} />
+        <Route path="settings" element={<Settings />} />
         <Route path="records/:recordId" element={<RecordForm />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
