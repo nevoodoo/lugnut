@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.1.0-rc.2](https://github.com/nevoodoo/lugnut/compare/v0.1.0-rc.1...v0.1.0-rc.2) (2026-10-28)
+
+
+### Features
+
+* add a proxmox lxc install and update script ([#19](https://github.com/nevoodoo/lugnut/issues/19)) ([310d6c2](https://github.com/nevoodoo/lugnut/commit/310d6c2ac5ec282216cb81df5b1aaf7bd37dadcf))
+* drop the minimum password length ([#21](https://github.com/nevoodoo/lugnut/issues/21)) ([d68fc67](https://github.com/nevoodoo/lugnut/commit/d68fc6730d07a034d3fc0bdd0ccf974328bf21b0))
+* import a lubelogger backup ([#24](https://github.com/nevoodoo/lugnut/issues/24)) ([030ccb7](https://github.com/nevoodoo/lugnut/commit/030ccb7a048345300a79907cfbeab5a05763b0e0))
+
 ## [0.1.0-rc.1](https://github.com/nevoodoo/lugnut/compare/v0.0.1...v0.1.0-rc.1) (2026-10-28)
 
 
