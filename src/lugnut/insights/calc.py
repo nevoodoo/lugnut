@@ -9,6 +9,7 @@ from lugnut.reminders.state import add_months
 SPEND_TYPES = {"fuel", "registration", "insurance", "inspection", "toll", "parking", "fine"}
 OUTLIER_SEGMENTS = 5
 OUTLIER_RATIO = 0.25
+GROUP_GAP_DAYS = 30
 
 
 @dataclass(frozen=True)
@@ -224,3 +225,138 @@ def economy(rows: Sequence[Row]) -> Economy:
         skipped,
         missing,
     )
+
+
+@dataclass(frozen=True)
+class RepeatJob:
+    name: str
+    count: int
+    last_date: dt.date | None
+    last_odometer_km: float | None
+    avg_days: float | None
+    avg_km: float | None
+    avg_cost: int | None
+    next_date: dt.date | None
+    next_km: float | None
+
+
+@dataclass(frozen=True)
+class Due:
+    id: int
+    title: str
+    kind: str
+    expiry_type: str | None
+    due_date: dt.date | None
+    due_km: float | None
+
+
+@dataclass(frozen=True)
+class Upcoming:
+    id: int
+    title: str
+    projected_date: dt.date | None
+    last_cost: int | None
+
+
+def _mean(values: Sequence[float]) -> float | None:
+    return sum(values) / len(values) if values else None
+
+
+def repeat_jobs(rows: Sequence[Row]) -> list[RepeatJob]:
+    """One occurrence per (job type, work record), oldest first."""
+    seen: dict[str, list[tuple[dt.date, float | None, list[int]]]] = {}
+    for r in rows:
+        if r.type != "work" or r.is_estimate or r.date is None:
+            continue
+        for name in {i.job_type for i in r.items if i.job_type}:
+            costs = [i.cost for i in r.items if i.job_type == name and i.cost is not None]
+            seen.setdefault(name, []).append((r.date, r.odometer_km, costs))
+    out = []
+    for name, occ in seen.items():
+        occ.sort(key=lambda o: o[0])
+        pairs = list(zip(occ, occ[1:], strict=False))
+        avg_days = _mean([(b[0] - a[0]).days for a, b in pairs])
+        avg_km = _mean([b[1] - a[1] for a, b in pairs if a[1] is not None and b[1] is not None])
+        avg_cost = _mean([c for o in occ for c in o[2]])
+        last_date, last_odo, _ = occ[-1]
+        out.append(
+            RepeatJob(
+                name,
+                len(occ),
+                last_date,
+                last_odo,
+                avg_days,
+                avg_km,
+                None if avg_cost is None else round(avg_cost),
+                None if avg_days is None else last_date + dt.timedelta(days=round(avg_days)),
+                None if avg_km is None or last_odo is None else last_odo + avg_km,
+            )
+        )
+    return sorted(out, key=lambda j: (-j.count, j.name))
+
+
+def km_per_day(rows: Sequence[Row], today: dt.date) -> float | None:
+    """Average daily distance over the readings of the last 365 days."""
+    since = today - dt.timedelta(days=365)
+    readings = sorted(
+        (r.date, r.odometer_km)
+        for r in rows
+        if r.date is not None and r.odometer_km is not None and since <= r.date <= today
+    )
+    if len(readings) < 2:
+        return None
+    days = (readings[-1][0] - readings[0][0]).days
+    km = readings[-1][1] - readings[0][1]
+    return km / days if days and km > 0 else None
+
+
+def _norm(text: str | None) -> str:
+    return (text or "").strip().casefold()
+
+
+def _last_cost(reminder: Due, spent: Sequence[_Spend]) -> int | None:
+    latest = sorted(spent, key=lambda s: s.date)
+    if reminder.kind == "expiry":
+        hits = [s.cost for s in latest if s.row.type == reminder.expiry_type]
+        return hits[-1] if hits else None
+    title = _norm(reminder.title)
+    for s in reversed(latest):
+        if _norm(s.row.title) == title:
+            return s.cost
+        for i in s.row.items:
+            if title in (_norm(i.job_type), _norm(i.description)):
+                return i.cost
+    return None
+
+
+def _project(
+    reminder: Due, today: dt.date, odometer_km: float | None, rate: float | None
+) -> dt.date | None:
+    dates = [reminder.due_date] if reminder.due_date else []
+    if reminder.due_km is not None and odometer_km is not None and rate:
+        days = max(round((reminder.due_km - odometer_km) / rate), 0)
+        dates.append(today + dt.timedelta(days=days))
+    return min(dates, default=None)
+
+
+def upcoming(
+    reminders: Sequence[Due], rows: Sequence[Row], today: dt.date, odometer_km: float | None
+) -> tuple[list[Upcoming], list[list[int]]]:
+    rate = km_per_day(rows, today)
+    spent = _spends(rows)
+    items = [
+        Upcoming(r.id, r.title, _project(r, today, odometer_km, rate), _last_cost(r, spent))
+        for r in reminders
+    ]
+    items.sort(key=lambda u: (u.projected_date is None, u.projected_date or dt.date.min))
+    groups: list[list[int]] = []
+    prev: dt.date | None = None
+    for u in items:
+        if u.projected_date is None:
+            break
+        if prev is not None and (u.projected_date - prev).days <= GROUP_GAP_DAYS:
+            groups[-1].append(u.id)
+        else:
+            groups.append([u.id])
+        prev = u.projected_date
+    return items, [g for g in groups if len(g) > 1]

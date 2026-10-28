@@ -3,12 +3,16 @@ import datetime as dt
 import pytest
 
 from lugnut.insights.calc import (
+    Due,
+    Item,
     Row,
     cost_summary,
     distance_km,
     economy,
     monthly_costs,
     ownership,
+    repeat_jobs,
+    upcoming,
 )
 
 D = dt.date
@@ -96,3 +100,52 @@ def test_ownership_with_sale_and_without_price():
     o = ownership(rows, D(2024, 1, 15), 2000000, D(2025, 1, 15), 1200000, D(2026, 1, 1))
     assert o.total == 2000000 + 5000 - 1200000 and o.months == 12 and o.distance_km == 20000
     assert ownership(rows, None, None, None, None, D(2026, 1, 1)).missing == ["no_purchase_price"]
+
+
+def work(day, odo, *items, month=1, est=False):
+    return Row(
+        "work",
+        D(2025, month, day),
+        odo,
+        sum(i.cost or 0 for i in items),
+        is_estimate=est,
+        details={"category": "service"},
+        items=items,
+    )
+
+
+def test_repeat_jobs_intervals():
+    def oil(c):
+        return Item("Oil change", None, c)
+
+    rows = [
+        work(1, 10000, oil(9000), month=1),
+        work(1, 15000, oil(11000), month=7),
+        work(1, None, oil(None), month=12),
+        work(2, 16000, Item(None, "wipers", 2000), month=8),
+    ]
+    [job] = repeat_jobs(rows)
+    assert (job.name, job.count, job.avg_km, job.avg_cost) == ("Oil change", 3, 5000, 10000)
+    assert job.avg_days == pytest.approx((181 + 153) / 2)
+    assert job.next_km is None  # last occurrence has no odometer
+
+
+def test_upcoming_projection_and_groups():
+    today = D(2026, 1, 1)
+    rows = [
+        Row("odometer", D(2025, 1, 1), 10000, None),
+        Row("odometer", D(2025, 12, 27), 19000, None),
+        Row("registration", D(2025, 2, 1), None, 80000),
+        work(1, 15000, Item("Oil change", None, 9500), month=6),
+    ]
+    rems = [
+        Due(1, "Oil change", "manual", None, None, 19500),  # 500 km at 25 km/day
+        Due(2, "Rego", "expiry", "registration", D(2026, 1, 30), None),
+        Due(3, "Tyres", "manual", None, D(2026, 9, 1), None),
+        Due(4, "Mystery", "manual", None, None, None),
+    ]
+    items, groups = upcoming(rems, rows, today, 19000)
+    assert [u.id for u in items] == [1, 2, 3, 4]
+    assert items[0].projected_date == D(2026, 1, 21) and items[0].last_cost == 9500
+    assert items[1].last_cost == 80000 and items[3].projected_date is None
+    assert groups == [[1, 2]]
