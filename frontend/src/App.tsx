@@ -4,6 +4,7 @@ import { api, ApiError, type User } from "./api/client";
 import { Shell } from "./app/Shell";
 import { Documents } from "./pages/Documents";
 import { Garage } from "./pages/Garage";
+import { ImportLubeLogger } from "./pages/ImportLubeLogger";
 import { HomeRedirect } from "./pages/HomeRedirect";
 import { Login } from "./pages/Login";
 import { QuickFuel } from "./pages/QuickFuel";
@@ -53,6 +54,7 @@ export function App() {
         <Route path="reminders/:reminderId" element={<ReminderForm />} />
         <Route path="documents" element={<Documents />} />
         <Route path="settings" element={<Settings />} />
+        <Route path="settings/import" element={<ImportLubeLogger />} />
         <Route path="records/:recordId" element={<RecordForm />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>

@@ -1,18 +1,20 @@
 import os
 from pathlib import PurePath
-from typing import Annotated
+from typing import Annotated, BinaryIO
 
 from fastapi import APIRouter, Form, HTTPException, Request, UploadFile
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 from lugnut.attachments import storage
 from lugnut.attachments.models import Attachment
 from lugnut.auth.deps import DB, utcnow
 from lugnut.auth.routes import Reader, Writer
 from lugnut.records.models import Record
+from lugnut.settings import Settings
 from lugnut.timeutil import UtcDatetime
 from lugnut.vehicles.models import Vehicle
 
@@ -45,6 +47,30 @@ def _invalid(loc: tuple[str, ...], msg: str, value: object) -> RequestValidation
     return RequestValidationError([{"type": "value_error", "loc": loc, "msg": msg, "input": value}])
 
 
+def add_attachment(
+    db: Session,
+    settings: Settings,
+    src: BinaryIO,
+    filename: str | None,
+    vehicle_id: int,
+    record_id: int | None,
+) -> Attachment:
+    """Save the file and add its row; the caller commits, and deletes the file if that fails."""
+    stored_name, content_type, size, sha256 = storage.save(settings, src)
+    a = Attachment(
+        vehicle_id=vehicle_id,
+        record_id=record_id,
+        filename=PurePath((filename or "").replace("\\", "/")).name or "file",
+        content_type=content_type,
+        size=size,
+        sha256=sha256,
+        stored_name=stored_name,
+        created_at=utcnow(),
+    )
+    db.add(a)
+    return a
+
+
 def _out(a: Attachment) -> AttachmentOut:
     return AttachmentOut.model_validate(a, from_attributes=True)
 
@@ -67,22 +93,11 @@ def upload_attachment(
                 ("body", "record_id"), "record_id is not a record of this vehicle", record_id
             )
     settings = request.app.state.settings
-    stored_name, content_type, size, sha256 = storage.save(settings, file)
-    a = Attachment(
-        vehicle_id=vehicle_id,
-        record_id=record_id,
-        filename=PurePath((file.filename or "").replace("\\", "/")).name or "file",
-        content_type=content_type,
-        size=size,
-        sha256=sha256,
-        stored_name=stored_name,
-        created_at=utcnow(),
-    )
+    a = add_attachment(db, settings, file.file, file.filename, vehicle_id, record_id)
     try:
-        db.add(a)
         db.commit()
     except BaseException:
-        storage.delete(settings, stored_name)
+        storage.delete(settings, a.stored_name)
         raise
     return _out(a)
 

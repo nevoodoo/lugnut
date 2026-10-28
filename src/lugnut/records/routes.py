@@ -1,9 +1,10 @@
 import datetime as dt
-from typing import Annotated
+from typing import Annotated, Any
 
 from fastapi import APIRouter, HTTPException, Query, Request
 from fastapi.exceptions import RequestValidationError
 from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 from lugnut.attachments import storage
 from lugnut.attachments.models import Attachment
@@ -19,7 +20,7 @@ from lugnut.records.schemas import (
     to_row_values,
 )
 from lugnut.reminders.expiry import sync_expiry
-from lugnut.settings_api import get_install_settings
+from lugnut.settings_api import InstallSettings, get_install_settings
 from lugnut.vehicles.models import Vehicle
 
 router = APIRouter(prefix="/api")
@@ -57,6 +58,33 @@ def _check_job_types(db: DB, body: RecordIn) -> None:
         raise RequestValidationError(errors)
 
 
+def insert_record(
+    db: Session,
+    v: Vehicle,
+    body: RecordIn,
+    install: InstallSettings,
+    distance_unit: str | None,
+    **extra: Any,
+) -> Record:
+    """Add a record and sync its expiry reminder; the caller commits.
+
+    distance_unit and install.volume_unit are the units the body's values are in."""
+    _check_job_types(db, body)
+    now = utcnow()
+    r = Record(
+        **to_row_values(body, install, distance_unit),
+        **extra,
+        vehicle=v,
+        line_items=to_line_items(body),
+        created_at=now,
+        updated_at=now,
+    )
+    db.add(r)
+    db.flush()
+    sync_expiry(db, v.id, r.type)
+    return r
+
+
 @router.get("/vehicles/{vehicle_id}/records")
 def list_records(
     vehicle_id: int,
@@ -84,19 +112,8 @@ def list_records(
 @router.post("/vehicles/{vehicle_id}/records", status_code=201)
 def create_record(vehicle_id: int, body: RecordIn, _: Writer, db: DB) -> RecordOut:
     v = _get_vehicle(db, vehicle_id)
-    _check_job_types(db, body)
     install = get_install_settings(db)
-    now = utcnow()
-    r = Record(
-        **to_row_values(body, install, v.distance_unit),
-        vehicle=v,
-        line_items=to_line_items(body),
-        created_at=now,
-        updated_at=now,
-    )
-    db.add(r)
-    db.flush()
-    sync_expiry(db, vehicle_id, r.type)
+    r = insert_record(db, v, body, install, v.distance_unit)
     db.commit()
     return to_out(r, install)
 

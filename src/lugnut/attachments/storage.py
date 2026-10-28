@@ -3,8 +3,9 @@ import logging
 import os
 import re
 import secrets
+from typing import BinaryIO
 
-from fastapi import HTTPException, UploadFile
+from fastapi import HTTPException
 
 from lugnut.settings import Settings
 
@@ -40,20 +41,20 @@ def path(settings: Settings, stored_name: str) -> str:
     return full
 
 
-def save(settings: Settings, upload: UploadFile) -> tuple[str, str, int, str]:
+def save(settings: Settings, src: BinaryIO) -> tuple[str, str, int, str]:
     """Stream to disk. Returns (stored_name, content_type, size, sha256)."""
-    kind = sniff(upload.file.read(16))
+    kind = sniff(src.read(16))
     if kind is None:
         raise HTTPException(415, "Unsupported file type")
     content_type, ext = kind
-    upload.file.seek(0)
+    src.seek(0)
     settings.attachments_dir.mkdir(parents=True, exist_ok=True)
     stored_name = f"{secrets.token_hex(16)}.{ext}"
     dest = path(settings, stored_name)
     digest, size = hashlib.sha256(), 0
     try:
         with open(dest, "xb") as out:
-            while chunk := upload.file.read(_CHUNK):
+            while chunk := src.read(_CHUNK):
                 size += len(chunk)
                 if size > MAX_BYTES:
                     raise HTTPException(413, "File too large")

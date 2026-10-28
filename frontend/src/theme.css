@@ -1185,3 +1185,38 @@ a.rec:hover .rec-title {
   padding-top: 1rem;
   border-top: 1px solid var(--rule);
 }
+
+/* LubeLogger import */
+.table-wrap {
+  overflow-x: auto;
+}
+.import table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.import th,
+.import td {
+  text-align: left;
+  vertical-align: top;
+  padding: 0.5rem 0.5rem 0.5rem 0;
+  border-bottom: 1px solid var(--rule);
+}
+.import td select {
+  min-height: 44px;
+  max-width: 100%;
+  border: 1.5px solid var(--rule);
+  border-radius: 8px;
+  background: var(--paper);
+  color: var(--ink);
+  font: 400 1rem var(--text);
+}
+.import td p {
+  margin: 0 0 0.25rem;
+}
+.import ul.plain {
+  list-style: none;
+  padding: 0;
+}
+.import input[type="file"] {
+  max-width: 100%;
+}

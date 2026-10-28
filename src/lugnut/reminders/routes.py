@@ -1,9 +1,10 @@
 import datetime as dt
-from typing import Annotated
+from typing import Annotated, Any
 
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.exceptions import RequestValidationError
 from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 from lugnut.auth.deps import DB, utcnow
 from lugnut.auth.routes import Reader, Writer
@@ -18,7 +19,7 @@ from lugnut.reminders.schemas import (
 )
 from lugnut.reminders.state import RANK, State, add_months, local_today
 from lugnut.settings_api import get_install_settings
-from lugnut.units import km_from, km_to
+from lugnut.units import DistanceUnit, km_from, km_to
 from lugnut.vehicles.models import Vehicle
 from lugnut.vehicles.odometer import current_odometer_km
 from lugnut.vehicles.schemas import effective_unit
@@ -43,6 +44,16 @@ def _get_vehicle(db: DB, vehicle_id: int) -> Vehicle:
 def _out(db: DB, r: Reminder) -> ReminderOut:
     v = _get_vehicle(db, r.vehicle_id)
     return to_out(r, get_install_settings(db), v.distance_unit, current_odometer_km(db, v))
+
+
+def insert_reminder(
+    db: Session, v: Vehicle, body: ReminderIn, unit: DistanceUnit, **extra: Any
+) -> Reminder:
+    """unit is the one the body's distances are in; the caller commits."""
+    r = Reminder(**to_row_values(body, unit), **extra, vehicle_id=v.id, created_at=utcnow())
+    db.add(r)
+    db.flush()
+    return r
 
 
 @router.get("/reminders")
@@ -76,9 +87,7 @@ def list_reminders(
 @router.post("/vehicles/{vehicle_id}/reminders", status_code=201)
 def create_reminder(vehicle_id: int, body: ReminderIn, _: Writer, db: DB) -> ReminderOut:
     v = _get_vehicle(db, vehicle_id)
-    unit = effective_unit(v.distance_unit, get_install_settings(db))
-    r = Reminder(**to_row_values(body, unit), vehicle_id=v.id, created_at=utcnow())
-    db.add(r)
+    r = insert_reminder(db, v, body, effective_unit(v.distance_unit, get_install_settings(db)))
     db.commit()
     return _out(db, r)
 

@@ -34,6 +34,7 @@ class Record(Base):
         Index("ix_record_vehicle_date", "vehicle_id", "date"),
         Index(
             "ux_record_source",
+            "vehicle_id",
             "source",
             "source_id",
             unique=True,
