@@ -3,7 +3,7 @@
 import calendar
 import re
 from dataclasses import dataclass, field
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, time
 from decimal import ROUND_HALF_UP, Decimal
 from typing import Any
 from zoneinfo import ZoneInfo
@@ -180,7 +180,13 @@ class _Mapper:
             for r in self.cols.get(k, [])
             if self._real(r.get("Date"))
         ]
-        return guess_timezone(times) if times else "UTC"
+        tz = guess_timezone(times) if times else "UTC"
+        if tz == "UTC" and any(t.astimezone(UTC).time() != time() for t in times):
+            self.warn(
+                "Dates in this backup don't line up with UTC. Set the timezone LubeLogger ran"
+                " in, or some dates may be a day out."
+            )
+        return tz
 
     def _guess_order(self) -> str:
         strs = [
@@ -441,15 +447,18 @@ class _Mapper:
         due_km = (r.get("Mileage") or None) if metric in ("Odometer", "Both") else None
         months = km = None
         if r.get("IsRecurring"):
-            months = self.months(
-                r, "ReminderMonthInterval", "CustomMonthIntervalUnit", "CustomMonthInterval"
-            )
-            name = r.get("ReminderMileageInterval")
-            km = (
-                r.get("CustomMileageInterval") or None
-                if name == "Other"
-                else mileage_interval(name)
-            )
+            # LubeLogger fills both intervals; only the one Metric selects is live
+            if metric in ("Date", "Both"):
+                months = self.months(
+                    r, "ReminderMonthInterval", "CustomMonthIntervalUnit", "CustomMonthInterval"
+                )
+            if metric in ("Odometer", "Both"):
+                name = r.get("ReminderMileageInterval")
+                km = (
+                    r.get("CustomMileageInterval") or None
+                    if name == "Other"
+                    else mileage_interval(name)
+                )
             if not months and not km:
                 self.warn("A recurring reminder has no usable interval; imported as one-off")
         if due_date is None and due_km is None:
@@ -472,7 +481,11 @@ class _Mapper:
         for k in SKIPPED:
             if n := len(self.cols.get(k, [])):
                 self.skipped[k] = n
-        if not any(rem["repeat_months"] for pv in self.plan.vehicles for rem in pv.reminders):
+        if not any(
+            rem["repeat_months"] or rem["repeat_km"]
+            for pv in self.plan.vehicles
+            for rem in pv.reminders
+        ):
             self.warn("no recurring reminders found")
         return self.plan
 

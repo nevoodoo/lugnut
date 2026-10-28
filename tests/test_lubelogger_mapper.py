@@ -43,5 +43,7 @@ def test_plan_maps_demo_backup():
     assert tax["type"] == "registration" and tax["details"]["expiry_date"] is None
     assert plan.skipped == {"supplyrecords": 10, "gasrecords": 1}
     (rem,) = v.reminders
-    assert (rem["due_km"], rem["repeat_months"], rem["repeat_km"]) == (225000, 12, 5000)
+    assert (rem["due_km"], rem["repeat_months"], rem["repeat_km"]) == (225000, None, 5000)
     assert plan.guesses["source_timezone"] == "UTC"
+    # the demo's times sit at 00:00, 06:00 and 07:00 UTC: no single offset fits
+    assert any(w.startswith("Dates in this backup don't line up with UTC") for w in plan.warnings)
