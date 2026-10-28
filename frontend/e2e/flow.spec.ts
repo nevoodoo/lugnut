@@ -66,4 +66,32 @@ test("required flow: add vehicle, log fuel, reminder fires", async ({ page }) =>
   expect(res.ok()).toBeTruthy();
   const reminders: { title: string; state: string }[] = await res.json();
   expect(reminders.find((r) => r.title === "Oil change")?.state).toBe("due");
+
+  // Work record: two line items, one with qty 2, and an attached PDF
+  await page.goto(`${vehicleUrl}/records/new?type=work`);
+  await page.getByLabel("Workshop").fill("Joe's Garage");
+  const lines = page.getByRole("listitem", { name: /^Line item/ });
+  if ((await lines.count()) === 0) await page.getByRole("button", { name: "Add line" }).click();
+  await page.getByRole("button", { name: "Add line" }).click();
+  await expect(lines).toHaveCount(2);
+  await lines.nth(0).getByLabel("Description").fill("Oil filter");
+  await lines.nth(0).getByLabel("Cost each").fill("30.00");
+  await lines.nth(0).getByLabel("Qty").fill("2");
+  await lines.nth(1).getByLabel("Description").fill("Labour");
+  await lines.nth(1).getByLabel("Cost each").fill("45.50");
+  await page.locator('input[type="file"]').setInputFiles("e2e/invoice.pdf");
+  await page.getByRole("button", { name: "Save" }).click();
+  await expect(page.getByRole("heading", { name: "Records" })).toBeVisible();
+
+  // Reload, reopen the record, check every line and the file
+  await page.reload();
+  await page.locator("a.rec", { hasText: "Joe's Garage" }).click();
+  await expect(lines).toHaveCount(2);
+  await expect(lines.nth(0).getByLabel("Description")).toHaveValue("Oil filter");
+  await expect(lines.nth(0).getByLabel("Cost each")).toHaveValue("30.00");
+  await expect(lines.nth(0).getByLabel("Qty")).toHaveValue("2");
+  await expect(lines.nth(1).getByLabel("Description")).toHaveValue("Labour");
+  await expect(lines.nth(1).getByLabel("Cost each")).toHaveValue("45.50");
+  await expect(page.getByText(/Total/)).toContainText("105.50");
+  await expect(page.getByRole("link", { name: "invoice.pdf" })).toBeVisible();
 });

@@ -45,6 +45,7 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - run: npm ci --ignore-scripts
       - run: npm run lint
+      - run: npm test
       # the build script runs tsc --noEmit before vite build
       - run: npm run build
 
