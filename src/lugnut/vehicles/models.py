@@ -1,6 +1,6 @@
 from datetime import date, datetime
 
-from sqlalchemy import JSON, ForeignKey
+from sqlalchemy import JSON, ForeignKey, Index, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from lugnut.db import Base
@@ -8,6 +8,15 @@ from lugnut.db import Base
 
 class Vehicle(Base):
     __tablename__ = "vehicle"
+    __table_args__ = (
+        Index(
+            "ux_vehicle_source",
+            "source",
+            "source_id",
+            unique=True,
+            sqlite_where=text("source IS NOT NULL"),
+        ),
+    )
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str]
     year: Mapped[int | None]
@@ -31,5 +40,7 @@ class Vehicle(Base):
         )
     )
     custom_fields: Mapped[dict[str, str]] = mapped_column(JSON, default=dict)
+    source: Mapped[str | None]
+    source_id: Mapped[str | None]
     archived: Mapped[bool] = mapped_column(default=False)
     created_at: Mapped[datetime]

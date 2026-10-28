@@ -11,6 +11,8 @@ from lugnut.auth.ratelimit import LoginLimiter
 from lugnut.auth.routes import router as auth_router
 from lugnut.bodylimit import BodyLimit
 from lugnut.db import get_engine
+from lugnut.lubelogger.routes import router as lubelogger_router
+from lugnut.lubelogger.routes import sweep_imports
 from lugnut.migrate import upgrade_database
 from lugnut.records.job_types import router as job_types_router
 from lugnut.records.routes import router as records_router
@@ -28,6 +30,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @asynccontextmanager
     async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
         upgrade_database(settings)
+        sweep_imports(settings)
         loop = None
         if settings.reminder_interval_seconds > 0:
             loop = asyncio.create_task(
@@ -54,6 +57,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(job_types_router)
     app.include_router(attachments_router)
     app.include_router(reminders_router)
+    app.include_router(lubelogger_router)
 
     @app.get("/api/health")
     def health() -> dict[str, str]:

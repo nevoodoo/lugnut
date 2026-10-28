@@ -16,6 +16,13 @@ class Reminder(Base):
             unique=True,
             sqlite_where=text("kind = 'expiry'"),
         ),
+        Index(
+            "ux_reminder_source",
+            "source",
+            "source_id",
+            unique=True,
+            sqlite_where=text("source IS NOT NULL"),
+        ),
     )
     id: Mapped[int] = mapped_column(primary_key=True)
     vehicle_id: Mapped[int] = mapped_column(ForeignKey("vehicle.id", ondelete="CASCADE"))
@@ -32,6 +39,8 @@ class Reminder(Base):
     source_record_id: Mapped[int | None] = mapped_column(
         ForeignKey("record.id", ondelete="SET NULL")
     )
+    source: Mapped[str | None]
+    source_id: Mapped[str | None]
     notified_state: Mapped[str | None]
     completed_at: Mapped[dt.datetime | None]
     created_at: Mapped[dt.datetime]

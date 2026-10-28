@@ -1,11 +1,14 @@
+from typing import Any
+
 from fastapi import APIRouter, HTTPException, Request
 from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 from lugnut.attachments import storage
 from lugnut.attachments.models import Attachment
 from lugnut.auth.deps import DB, utcnow
 from lugnut.auth.routes import Reader, Writer
-from lugnut.settings_api import get_install_settings
+from lugnut.settings_api import InstallSettings, get_install_settings
 from lugnut.vehicles.models import Vehicle
 from lugnut.vehicles.odometer import current_odometer_km
 from lugnut.vehicles.schemas import VehicleIn, VehicleOut, to_out, to_row_values
@@ -20,6 +23,13 @@ def _get(db: DB, vehicle_id: int) -> Vehicle:
     return v
 
 
+def insert_vehicle(db: Session, body: VehicleIn, install: InstallSettings, **extra: Any) -> Vehicle:
+    v = Vehicle(**to_row_values(body, install), **extra, created_at=utcnow())
+    db.add(v)
+    db.flush()
+    return v
+
+
 @router.get("")
 def list_vehicles(_: Reader, db: DB, archived: bool = False) -> list[VehicleOut]:
     install = get_install_settings(db)
@@ -30,8 +40,7 @@ def list_vehicles(_: Reader, db: DB, archived: bool = False) -> list[VehicleOut]
 @router.post("", status_code=201)
 def create_vehicle(body: VehicleIn, _: Writer, db: DB) -> VehicleOut:
     install = get_install_settings(db)
-    v = Vehicle(**to_row_values(body, install), created_at=utcnow())
-    db.add(v)
+    v = insert_vehicle(db, body, install)
     db.commit()
     return to_out(v, install, current_odometer_km(db, v))
 

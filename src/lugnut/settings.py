@@ -23,3 +23,7 @@ class Settings(BaseSettings):
     @property
     def attachments_dir(self) -> Path:
         return self.data_dir / "attachments"
+
+    @property
+    def imports_dir(self) -> Path:
+        return self.data_dir / "imports"
