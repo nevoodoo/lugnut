@@ -33,6 +33,8 @@ def test_upload_returns_object_and_never_escapes_dir(client, vehicle, data_dir):
     assert list((data_dir / "attachments").iterdir())  # stored inside
     assert not (data_dir.parent / "evil.png").exists()
     assert client.get(f"/api/attachments/{r.json()['id']}/file").content == PNG_BYTES
+    other = post_record(client, _new_vehicle(client), MINIMAL_WORK)
+    assert upload(client, vehicle, record_id=other["id"]).status_code == 422  # another vehicle's
 
 
 def test_oversized_and_wrong_type_rejected(client, vehicle):
@@ -48,3 +50,19 @@ def test_deleting_vehicle_removes_records_and_files(client, vehicle, data_dir):
     client.delete(f"/api/vehicles/{vehicle}", headers=CSRF)
     assert not any((data_dir / "attachments").iterdir())
     assert client.get(f"/api/records/{rec['id']}").status_code == 404
+
+
+def test_unauthenticated_chunked_upload_rejected(client, data_dir):
+    # catches: Starlette spooling a huge multipart body to disk before auth runs
+    def chunks():
+        for _ in range(27):
+            yield b"\0" * 2**20
+
+    r = client.post(
+        "/api/vehicles/1/attachments",
+        content=chunks(),
+        headers={"content-type": "multipart/form-data; boundary=x"},
+    )
+    assert r.status_code == 413
+    att = data_dir / "attachments"
+    assert not att.exists() or not any(att.iterdir())

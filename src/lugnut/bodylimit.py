@@ -15,11 +15,13 @@ class BodyLimit:
         if scope["type"] != "http":
             await self.app(scope, receive, send)
             return
-        rejected = False
+        rejected = started = False
 
         async def reject() -> None:
             nonlocal rejected
             rejected = True
+            if started:  # a response is already underway; just cut the request off
+                return
             body = b'{"detail":"Request too large"}'
             await send(
                 {
@@ -54,6 +56,9 @@ class BodyLimit:
             return msg
 
         async def guarded_send(msg: Message) -> None:
+            nonlocal started
+            if msg["type"] == "http.response.start":
+                started = True
             if not rejected:  # the app may try to answer the disconnect; drop it
                 await send(msg)
 
