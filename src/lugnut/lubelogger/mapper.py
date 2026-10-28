@@ -3,7 +3,7 @@
 import calendar
 import re
 from dataclasses import dataclass, field
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime
 from decimal import ROUND_HALF_UP, Decimal
 from typing import Any
 from zoneinfo import ZoneInfo
@@ -25,10 +25,18 @@ NUMBER_WORDS = {
         "Zero One Two Three Four Five Six Seven Eight Nine Ten Eleven Twelve Thirteen "
         "Fourteen Fifteen Sixteen Seventeen Eighteen Nineteen".split()
     )
-} | {w: n * 10 for n, w in enumerate("_ _ Twenty Thirty Forty Fifty Sixty Seventy Eighty Ninety".split())}
+} | {
+    w: n * 10
+    for n, w in enumerate("_ _ Twenty Thirty Forty Fifty Sixty Seventy Eighty Ninety".split())
+}
 WORK = {"servicerecords": "service", "collisionrecords": "repair", "upgraderecords": "upgrade"}
 PRIORITY = {"Critical": "high", "Normal": "medium", "Low": "low"}
-PROGRESS = {"Backlog": "backlog", "InProgress": "in_progress", "Testing": "in_progress", "Done": "done"}
+PROGRESS = {
+    "Backlog": "backlog",
+    "InProgress": "in_progress",
+    "Testing": "in_progress",
+    "Done": "done",
+}
 SKIPPED = ("supplyrecords", "equipmentrecords", "planrecordtemplates", "inspectionrecordtemplates")
 VEHICLE_FIELDS = {"vin": "vin", "enginenumber": "engine_number", "engineno": "engine_number",
                   "engine": "engine_number", "colour": "colour", "color": "colour"}  # fmt: skip
@@ -57,7 +65,7 @@ class ImportPlan:
 def money(v: Any) -> int | None:
     if v is None:
         return None
-    return int((Decimal(v) * 100).quantize(Decimal(1), rounding=ROUND_HALF_UP))
+    return int((Decimal(str(v)) * 100).quantize(Decimal(1), rounding=ROUND_HALF_UP))
 
 
 def mileage_interval(name: str | None) -> int | None:
@@ -110,7 +118,7 @@ def parse_locale_date(s: Any, order: str) -> date | None:
 
 
 def guess_timezone(times: list[datetime]) -> str:
-    tods = {t.astimezone(timezone.utc).time() for t in times}
+    tods = {t.astimezone(UTC).time() for t in times}
     if len(tods) != 1:
         return "UTC"
     (t,) = tods
@@ -135,6 +143,28 @@ class _Mapper:
         self.tax_types = options.get("tax_types") or {}
         self.skipped = self.plan.skipped
 
+    def money(self, v: Any) -> int | None:
+        try:
+            return money(v)
+        except ArithmeticError:
+            self.warn(f"Amount '{v}' couldn't be read; left blank")
+            return None
+
+    def vdate(self, v: Doc, key: str) -> date | None:
+        raw = v.get(key)
+        d = parse_locale_date(raw, self.order)
+        if d is None and str(raw or "").strip():
+            self.warn(f"Vehicle {key} '{raw}' couldn't be read; left blank")
+        return d
+
+    def guard(self, coll: str, r: Doc, fn: Any, *args: Any) -> Any:
+        try:
+            return fn(*args)
+        except (ValueError, TypeError, KeyError, ArithmeticError) as e:
+            self.warn(f"{coll} {r.get('_id', '?')}: skipped, {type(e).__name__} {str(e)[:60]}")
+            self.skip(coll)
+            return None
+
     def warn(self, msg: str) -> None:
         if msg not in self.plan.warnings:
             self.plan.warnings.append(msg)
@@ -153,7 +183,9 @@ class _Mapper:
         return guess_timezone(times) if times else "UTC"
 
     def _guess_order(self) -> str:
-        strs = [v.get(k) for v in self.cols.get("vehicles", []) for k in ("PurchaseDate", "SoldDate")]
+        strs = [
+            v.get(k) for v in self.cols.get("vehicles", []) for k in ("PurchaseDate", "SoldDate")
+        ]
         order, certain = guess_date_order(strs)
         if not certain:
             self.warn("Vehicle purchase/sold dates are ambiguous; assumed DMY, please confirm")
@@ -174,21 +206,27 @@ class _Mapper:
         for f in r.get("Files") or []:
             loc = str(f.get("Location") or "")
             if loc and not loc.startswith("/defaults/"):
-                out.append({"name": f.get("Name") or loc.rsplit("/", 1)[-1], "zip_path": loc.lstrip("/")})
+                out.append(
+                    {"name": f.get("Name") or loc.rsplit("/", 1)[-1], "zip_path": loc.lstrip("/")}
+                )
         return out
 
-    def base(self, coll: str, r: Doc, rtype: str, title: str | None, details: Doc, **kw: Any) -> Doc:
+    def base(
+        self, coll: str, r: Doc, rtype: str, title: str | None, details: Doc, **kw: Any
+    ) -> Doc:
         notes = r.get("Notes")
         rec = {
             "type": rtype,
             "date": self.day(r.get("Date")),
             "odometer": r.get("Mileage") or None,
-            "cost": money(r.get("Cost")),
+            "cost": self.money(r.get("Cost")),
             "is_estimate": False,
             "title": title,
             "notes": notes,
             "tags": list(r.get("Tags") or []),
-            "custom_fields": {f["Name"]: str(f.get("Value") or "") for f in r.get("ExtraFields") or []},
+            "custom_fields": {
+                f["Name"]: str(f.get("Value") or "") for f in r.get("ExtraFields") or []
+            },
             "details": details,
             "source_id": f"{coll}:{r['_id']}",
             "source_mileage": r.get("Mileage"),
@@ -207,7 +245,7 @@ class _Mapper:
         for text in (tags, desc):
             if "insur" in text:
                 return "insurance", True
-            if re.search(r"rego|registration|licen|ctp|vehicle tax|mot", text):
+            if re.search(r"rego|registration|licen|ctp|vehicle tax|\bmot\b", text):
                 return "registration", True
         return "registration", False
 
@@ -225,12 +263,20 @@ class _Mapper:
 
     # per vehicle
     def vehicle(self, v: Doc) -> PlannedVehicle:
+        label = (
+            f"Vehicle {v.get('Make') or ''} {v.get('Model') or ''}".strip() or f"Vehicle {v['_id']}"
+        )
         if v.get("IsElectric"):
-            self.warn("Electric vehicles aren't supported; imported as petrol, fuel records skipped")
+            self.warn(
+                f"{label}: electric vehicles aren't supported; "
+                "imported as petrol, fuel records skipped"
+            )
         if v.get("UseHours"):
-            self.warn("A vehicle counts engine hours; they are imported as distance")
+            self.warn(f"{label}: counts engine hours; they are imported as distance")
         if v.get("HasOdometerAdjustment"):
-            self.warn("Odometer adjustment is already applied to stored readings; Lugnut's is 0")
+            self.warn(
+                f"{label}: odometer adjustment is already applied to stored readings; Lugnut's is 0"
+            )
         name = " ".join(str(p) for p in (v.get("Year"), v.get("Make"), v.get("Model")) if p)
         out: dict[str, Any] = {
             "name": name or f"Vehicle {v['_id']}",
@@ -240,10 +286,10 @@ class _Mapper:
             "plate": v.get("LicensePlate"),
             "fuel_type": "diesel" if v.get("IsDiesel") else "petrol",
             "distance_unit": self.unit,
-            "purchase_date": parse_locale_date(v.get("PurchaseDate"), self.order),
-            "purchase_price": money(v.get("PurchasePrice")) or None,
-            "sold_date": parse_locale_date(v.get("SoldDate"), self.order),
-            "sold_price": money(v.get("SoldPrice")) or None,
+            "purchase_date": self.vdate(v, "PurchaseDate"),
+            "purchase_price": self.money(v.get("PurchasePrice")) or None,
+            "sold_date": self.vdate(v, "SoldDate"),
+            "sold_price": self.money(v.get("SoldPrice")) or None,
             "odometer_adjustment": 0,
             "custom_fields": {},
         }
@@ -254,38 +300,45 @@ class _Mapper:
             elif f.get("Value"):
                 out["custom_fields"][f["Name"]] = str(f["Value"])
         loc = str(v.get("ImageLocation") or "")
-        pv = PlannedVehicle(f"vehicles:{v['_id']}", out, loc.lstrip("/") if loc.startswith("/images/") else None)
+        pv = PlannedVehicle(
+            f"vehicles:{v['_id']}", out, loc.lstrip("/") if loc.startswith("/images/") else None
+        )
+
         def mine(k: str) -> list[Doc]:
             return [r for r in self.cols.get(k, []) if r.get("VehicleId") == v["_id"]]
 
+        jobs: list[tuple[str, Doc, Any, tuple[Any, ...]]] = []
         for coll, cat in WORK.items():
-            for r in mine(coll):
-                pv.records.append(self.work(coll, cat, r))
-        for r in mine("gasrecords"):
-            if v.get("IsElectric"):
-                self.skip("gasrecords (electric)")
-            elif not r.get("Gallons") or r["Gallons"] <= 0:
-                self.skip("gasrecords (no volume)")
-            else:
-                pv.records.append(self.fuel(r))
-        for r in mine("odometerrecords"):
-            pv.records.append(self.base("odometerrecords", r, "odometer", None, {}, odometer=r.get("Mileage")))
-        for r in mine("taxrecords"):
-            pv.records.append(self.tax(r, out.get("plate")))
-        for r in mine("planrecords"):
-            pv.records.append(self.todo(r))
-        for r in mine("notes"):
-            pv.records.append(self.note(r))
-        for r in mine("inspectionrecords"):
-            pv.records.append(self.inspection(r))
+            jobs += [(coll, r, self.work, (coll, cat, r)) for r in mine(coll)]
+        jobs += [("gasrecords", r, self.fuel_or_skip, (r, v)) for r in mine("gasrecords")]
+        jobs += [("odometerrecords", r, self.odometer, (r,)) for r in mine("odometerrecords")]
+        jobs += [("taxrecords", r, self.tax, (r, out.get("plate"))) for r in mine("taxrecords")]
+        jobs += [("planrecords", r, self.todo, (r,)) for r in mine("planrecords")]
+        jobs += [("notes", r, self.note, (r,)) for r in mine("notes")]
+        jobs += [("inspectionrecords", r, self.inspection, (r,)) for r in mine("inspectionrecords")]
+        for coll, r, fn, args in jobs:
+            if rec := self.guard(coll, r, fn, *args):
+                pv.records.append(rec)
         for r in mine("reminderrecords"):
-            if rem := self.reminder(r):
+            if rem := self.guard("reminderrecords", r, self.reminder, r):
                 pv.reminders.append(rem)
         dropped = [x for x in pv.records if x["date"] is None and x["type"] not in ("todo", "note")]
-        for x in dropped:
+        for _ in dropped:
             self.skip("records without a date")
         pv.records = [x for x in pv.records if x not in dropped]
         return pv
+
+    def fuel_or_skip(self, r: Doc, v: Doc) -> Doc | None:
+        if v.get("IsElectric"):
+            self.skip("gasrecords (electric)")
+        elif not r.get("Gallons") or r["Gallons"] <= 0:
+            self.skip("gasrecords (no volume)")
+        else:
+            return self.fuel(r)
+        return None
+
+    def odometer(self, r: Doc) -> Doc:
+        return self.base("odometerrecords", r, "odometer", None, {}, odometer=r.get("Mileage"))
 
     def work(self, coll: str, cat: str, r: Doc) -> Doc:
         items = [
@@ -293,12 +346,14 @@ class _Mapper:
                 "description": f"{h.get('Description') or ''} ({h['PartNumber']})"
                 if h.get("PartNumber")
                 else h.get("Description"),
-                "cost": money(h.get("Cost")),
+                "cost": self.money(h.get("Cost")),
                 "quantity": float(h["Quantity"]) if h.get("Quantity") is not None else None,
             }
             for h in r.get("RequisitionHistory") or []
         ]
-        return self.base(coll, r, "work", r.get("Description"), {"category": cat, "line_items": items})
+        return self.base(
+            coll, r, "work", r.get("Description"), {"category": cat, "line_items": items}
+        )
 
     def fuel(self, r: Doc) -> Doc:
         d = {
@@ -313,17 +368,26 @@ class _Mapper:
         guessed, certain = self.tax_type(r)
         rtype = self.tax_types.get(sid, guessed)
         if not certain and sid not in self.tax_types:
-            self.warn("Some tax records have an unclear type (check type); defaulted to registration")
+            self.warn(
+                "Some tax records have an unclear type (check type); defaulted to registration"
+            )
         expiry = None
         d = self.day(r.get("Date"))
         if r.get("IsRecurring") and d:
-            n = self.months(r, "RecurringInterval", "CustomMonthIntervalUnit", "CustomMonthInterval")
+            n = self.months(
+                r, "RecurringInterval", "CustomMonthIntervalUnit", "CustomMonthInterval"
+            )
             expiry = add_months(d, n) if n else None
         details: dict[str, Any] = {"expiry_date": expiry}
         if rtype == "registration" and plate:
             details["plate"] = plate
         self.plan.tax_choices.append(
-            {"source_id": sid, "description": r.get("Description"), "date": d, "guessed_type": rtype}
+            {
+                "source_id": sid,
+                "description": r.get("Description"),
+                "date": d,
+                "guessed_type": rtype,
+            }
         )
         return self.base("taxrecords", r, rtype, r.get("Description"), details, odometer=None)
 
@@ -331,14 +395,24 @@ class _Mapper:
         details = {
             "priority": PRIORITY.get(str(r.get("Priority")), "medium"),
             "status": PROGRESS.get(str(r.get("Progress")), "backlog"),
-            "quoted": money(r.get("Cost")),
+            "quoted": self.money(r.get("Cost")),
         }
-        rec = self.base("planrecords", r, "todo", r.get("Description"), details, odometer=None, cost=None)
+        rec = self.base(
+            "planrecords", r, "todo", r.get("Description"), details, odometer=None, cost=None
+        )
         rec["date"] = self.day(r.get("DateCreated"))
         return rec
 
     def note(self, r: Doc) -> Doc:
-        rec = self.base("notes", r, "note", r.get("Description"), {"pinned": bool(r.get("Pinned"))}, odometer=None, cost=None)
+        rec = self.base(
+            "notes",
+            r,
+            "note",
+            r.get("Description"),
+            {"pinned": bool(r.get("Pinned"))},
+            odometer=None,
+            cost=None,
+        )
         rec["notes"] = r.get("NoteText")
         return rec
 
@@ -351,7 +425,13 @@ class _Mapper:
             failed = failed or bool(x.get("Failed")) or any(v.get("IsFail") for v in vals)
             picked = [v.get("Description") for v in vals if v.get("IsSelected")] or [x.get("Notes")]
             lines.append(f"{x.get('Description')}: {', '.join(str(p) for p in picked if p)}")
-        rec = self.base("inspectionrecords", r, "inspection", r.get("Description"), {"result": "fail" if failed else "pass"})
+        rec = self.base(
+            "inspectionrecords",
+            r,
+            "inspection",
+            r.get("Description"),
+            {"result": "fail" if failed else "pass"},
+        )
         rec["notes"] = "\n".join(lines) or None
         return rec
 
@@ -361,9 +441,15 @@ class _Mapper:
         due_km = (r.get("Mileage") or None) if metric in ("Odometer", "Both") else None
         months = km = None
         if r.get("IsRecurring"):
-            months = self.months(r, "ReminderMonthInterval", "CustomMonthIntervalUnit", "CustomMonthInterval")
+            months = self.months(
+                r, "ReminderMonthInterval", "CustomMonthIntervalUnit", "CustomMonthInterval"
+            )
             name = r.get("ReminderMileageInterval")
-            km = r.get("CustomMileageInterval") or None if name == "Other" else mileage_interval(name)
+            km = (
+                r.get("CustomMileageInterval") or None
+                if name == "Other"
+                else mileage_interval(name)
+            )
             if not months and not km:
                 self.warn("A recurring reminder has no usable interval; imported as one-off")
         if due_date is None and due_km is None:
@@ -380,7 +466,9 @@ class _Mapper:
         }
 
     def run(self) -> ImportPlan:
-        self.plan.vehicles = [self.vehicle(v) for v in self.cols.get("vehicles", [])]
+        for v in self.cols.get("vehicles", []):
+            if pv := self.guard("vehicles", v, self.vehicle, v):
+                self.plan.vehicles.append(pv)
         for k in SKIPPED:
             if n := len(self.cols.get(k, [])):
                 self.skipped[k] = n
