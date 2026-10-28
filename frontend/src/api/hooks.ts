@@ -11,6 +11,7 @@ export type RecordIn = S["RecordIn"];
 export type JobType = S["JobTypeOut"];
 export type Reminder = S["ReminderOut"];
 export type ReminderIn = S["ReminderIn"];
+export type Insights = S["InsightsOut"];
 export type Token = S["TokenOut"];
 export type Attachment = S["AttachmentOut"];
 
@@ -46,6 +47,8 @@ export const useVehicles = (archived = false) =>
 export const useVehicle = (id: number) => useGet<Vehicle>(["vehicles", id], `/vehicles/${id}`, id > 0);
 export const useRecords = (vehicleId: number, filters: RecordFilters = {}) =>
   useGet<LugnutRecord[]>(["records", vehicleId, filters], `/vehicles/${vehicleId}/records${qs(filters)}`);
+export const useInsights = (vehicleId: number) =>
+  useGet<Insights>(["insights", vehicleId], `/vehicles/${vehicleId}/insights`, vehicleId > 0);
 export const useRecord = (id: number) => useGet<LugnutRecord>(["record", id], `/records/${id}`, id > 0);
 export const useJobTypes = () => useGet<JobType[]>(["job-types"], "/job-types");
 export const useReminders = (filters: ReminderFilters = {}) =>
@@ -66,18 +69,18 @@ function useWrite<V, R = unknown>(fn: (v: V) => Promise<R>, invalidate: QueryKey
 }
 
 // Records change odometers, costs and expiry reminders, so they refresh vehicles and reminders too.
-const RECORD_KEYS: QueryKey[] = [["records"], ["record"], ["vehicles"], ["reminders"]];
+const RECORD_KEYS: QueryKey[] = [["records"], ["record"], ["vehicles"], ["reminders"], ["insights"]];
 
 export const useSaveVehicle = () =>
   useWrite(
     ({ id, body }: { id?: number; body: VehicleIn }) =>
       api<Vehicle>(id ? `/vehicles/${id}` : "/vehicles", id ? "PUT" : "POST", body),
-    [["vehicles"], ["records"], ["record"], ["reminders"]],
+    [["vehicles"], ["records"], ["record"], ["reminders"], ["insights"]],
   );
 export const useDeleteVehicle = () =>
   useWrite(
     (id: number) => api<void>(`/vehicles/${id}`, "DELETE"),
-    [["vehicles"], ["records"], ["record"], ["reminders"]],
+    [["vehicles"], ["records"], ["record"], ["reminders"], ["insights"]],
   );
 
 export const useSaveRecord = () =>
@@ -93,7 +96,7 @@ export function useDeleteRecord() {
   return useMutation({
     mutationFn: (id: number) => api<void>(`/records/${id}`, "DELETE"),
     onSuccess: (_, id) => {
-      for (const queryKey of [["records"], ["vehicles"], ["reminders"]]) void qc.invalidateQueries({ queryKey });
+      for (const queryKey of [["records"], ["vehicles"], ["reminders"], ["insights"]]) void qc.invalidateQueries({ queryKey });
       setTimeout(() => qc.removeQueries({ queryKey: ["record", id] }));
     },
   });
@@ -121,21 +124,21 @@ export const useSaveReminder = () =>
   useWrite(
     ({ id, vehicleId, body }: { id?: number; vehicleId: number; body: ReminderIn }) =>
       api<Reminder>(id ? `/reminders/${id}` : `/vehicles/${vehicleId}/reminders`, id ? "PUT" : "POST", body),
-    [["reminders"]],
+    [["reminders"], ["insights"]],
   );
 export const useCompleteReminder = () =>
   useWrite(
     ({ id, date, odometer }: { id: number; date?: string; odometer?: number }) =>
       api<Reminder>(`/reminders/${id}/complete`, "POST", { date, odometer }),
-    [["reminders"]],
+    [["reminders"], ["insights"]],
   );
 export const useDeleteReminder = () =>
-  useWrite((id: number) => api<void>(`/reminders/${id}`, "DELETE"), [["reminders"]]);
+  useWrite((id: number) => api<void>(`/reminders/${id}`, "DELETE"), [["reminders"], ["insights"]]);
 
 export const useSaveSettings = () =>
   useWrite(
     (body: S["SettingsIn"]) => api<Settings>("/settings", "PUT", body),
-    [["settings"], ["vehicles"], ["records"], ["record"], ["reminders"]],
+    [["settings"], ["vehicles"], ["records"], ["record"], ["reminders"], ["insights"]],
   );
 export const useSetDiscord = () =>
   useWrite((url: string | null) => api<Settings>("/settings/discord", "PUT", { url }), [["settings"]]);

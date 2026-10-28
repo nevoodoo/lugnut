@@ -69,3 +69,12 @@ export const today = (timezone: string): string => dateInZone(new Date(), timezo
 // A line item's cost is per unit; a blank quantity counts as one. Result is in minor units.
 export const lineItemsTotal = (items: { cost: number | null; quantity: number | null }[]): number =>
   items.reduce((sum, i) => sum + Math.round((i.cost ?? 0) * (i.quantity ?? 1)), 0);
+
+// Fuel economy is shown to one decimal place.
+export const formatEconomy = (value: number | null, unit: string): string =>
+  value === null ? "" : `${value.toFixed(1)} ${unit}`;
+
+// Money per distance unit, rounded to whole minor units; empty when there is no figure.
+export function perDistance(v: number | null, m: Pick<InstallSettings, "currency">, unit: string): string {
+  return v === null ? "" : `${formatMoney(Math.round(v), m)}/${unit}`;
+}

@@ -11,6 +11,7 @@ from lugnut.auth.ratelimit import LoginLimiter
 from lugnut.auth.routes import router as auth_router
 from lugnut.bodylimit import BodyLimit
 from lugnut.db import get_engine
+from lugnut.insights.routes import router as insights_router
 from lugnut.lubelogger.routes import router as lubelogger_router
 from lugnut.lubelogger.routes import sweep_imports
 from lugnut.migrate import upgrade_database
@@ -57,6 +58,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(job_types_router)
     app.include_router(attachments_router)
     app.include_router(reminders_router)
+    app.include_router(insights_router)
     app.include_router(lubelogger_router)
 
     @app.get("/api/health")
