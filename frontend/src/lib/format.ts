@@ -69,3 +69,7 @@ export const today = (timezone: string): string => dateInZone(new Date(), timezo
 // A line item's cost is per unit; a blank quantity counts as one. Result is in minor units.
 export const lineItemsTotal = (items: { cost: number | null; quantity: number | null }[]): number =>
   items.reduce((sum, i) => sum + Math.round((i.cost ?? 0) * (i.quantity ?? 1)), 0);
+
+// Fuel economy is shown to one decimal place.
+export const formatEconomy = (value: number | null, unit: string): string =>
+  value === null ? "" : `${value.toFixed(1)} ${unit}`;

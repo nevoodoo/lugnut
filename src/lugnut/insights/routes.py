@@ -121,7 +121,12 @@ def _rows(db: DB, vehicle_id: int) -> list[calc.Row]:
             r.is_estimate,
             r.title,
             {**r.details, "volume": r.details.get("volume_l")},
-            tuple(calc.Item(names.get(i.job_type_id) if i.job_type_id else None, i.description, i.cost) for i in r.line_items),
+            tuple(
+                calc.Item(
+                    names.get(i.job_type_id) if i.job_type_id else None, i.description, i.cost
+                )
+                for i in r.line_items
+            ),
         )
         for r in records
     ]
@@ -213,7 +218,9 @@ def get_insights(_: Reader, db: DB, vehicle_id: int) -> InsightsOut:
             months=own.months,
             distance=_distance(own.distance_km, unit),
             per_distance=_per_distance(own.per_km, unit),
-            per_month=None if own.total is None or not own.months else round(own.total / own.months),
+            per_month=None
+            if own.total is None or not own.months
+            else round(own.total / own.months),
             missing=own.missing,
         ),
         economy=_economy(calc.economy(rows), unit, install.volume_unit, convert),
