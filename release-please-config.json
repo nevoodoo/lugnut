@@ -4,6 +4,7 @@
   "bump-minor-pre-major": true,
   "versioning": "prerelease",
   "prerelease-type": "rc",
+  "prerelease": true,
   "draft": true,
   "force-tag-creation": true,
   "include-component-in-tag": false,
