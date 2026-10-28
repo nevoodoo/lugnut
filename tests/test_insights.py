@@ -1,6 +1,7 @@
 import datetime as dt
 
 import pytest
+from conftest import CSRF
 
 from lugnut.insights.calc import (
     Due,
@@ -155,3 +156,36 @@ def test_economy_skips_fill_without_volume():
     rows = [fuel(1, 1000, 40), fuel(2, 1200, 0), fuel(3, 1500, 30), fuel(4, 2000, 35)]
     e = economy(rows)
     assert [s.distance_km for s in e.segments] == [300, 500] and e.skipped == 1
+
+
+def test_insights_api_us_units(client, logged_in):
+    # catches: unit conversion slips (mpg, miles) and a missing 404
+    client.put(
+        "/api/settings",
+        json={"distance_unit": "mi", "volume_unit": "gal_us", "currency": "USD"},
+        headers=CSRF,
+    )
+    vid = client.post(
+        "/api/vehicles", json={"name": "Daily", "purchase_price": 2000000}, headers=CSRF
+    ).json()["id"]
+    for day, odo, gal in [("01", 100, 10), ("10", 400, 10), ("20", 700, 12)]:
+        r = client.post(
+            f"/api/vehicles/{vid}/records",
+            json={
+                "type": "fuel",
+                "date": f"2026-09-{day}",
+                "odometer": odo,
+                "cost": 3000,
+                "details": {"volume": gal, "full_tank": True},
+            },
+            headers=CSRF,
+        )
+        assert r.status_code == 201, r.text
+    r = client.get(f"/api/vehicles/{vid}/insights")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["economy_unit"] == "mpg" and body["lower_is_better"] is False
+    assert body["economy"]["average"] == pytest.approx(600 / 22, rel=1e-3)
+    assert body["all_time"]["distance"] == pytest.approx(600, abs=0.1)
+    assert body["ownership"]["missing"] == []
+    assert client.get("/api/vehicles/9999/insights").status_code == 404
