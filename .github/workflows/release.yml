@@ -18,7 +18,7 @@ jobs:
     outputs:
       version: ${{ steps.version.outputs.version }}
     steps:
-      - uses: actions/checkout@v6.1.0
+      - uses: actions/checkout@v7.0.1
         with:
           ref: ${{ inputs.tag }}
           persist-credentials: false
@@ -72,7 +72,7 @@ jobs:
       TAG: ${{ inputs.tag }}
       VERSION: ${{ needs.build.outputs.version }}
     steps:
-      - uses: actions/checkout@v6.1.0
+      - uses: actions/checkout@v7.0.1
         with:
           ref: ${{ inputs.tag }}
           persist-credentials: false
