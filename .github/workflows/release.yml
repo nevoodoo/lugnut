@@ -135,5 +135,5 @@ jobs:
           if [[ "$VERSION" == *rc* ]]; then
             gh release edit "$TAG" --draft=false --prerelease
           else
-            gh release edit "$TAG" --draft=false
+            gh release edit "$TAG" --draft=false --prerelease=false --latest
           fi
