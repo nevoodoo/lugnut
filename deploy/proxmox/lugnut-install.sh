@@ -8,6 +8,10 @@
 #   LUGNUT_NO_SYSTEMD  set to 1 to skip systemd (for testing in Docker)
 set -euo pipefail
 
+# pct exec starts with a minimal PATH and no locale, so set both.
+export PATH="/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin"
+export LC_ALL=C.UTF-8
+
 APP_HOME=/opt/lugnut
 ENV_FILE=/etc/lugnut.env
 VERSION="${LUGNUT_VERSION:-}"
@@ -21,7 +25,7 @@ install_packages() {
   log "Installing curl and ca-certificates"
   export DEBIAN_FRONTEND=noninteractive
   apt-get update -qq
-  apt-get install -y -qq curl ca-certificates
+  apt-get install -y -qq curl ca-certificates >/dev/null
 }
 
 install_uv() {
@@ -112,6 +116,7 @@ write_update_script() {
 # version or wheel instead of upgrading to the latest release.
 set -euo pipefail
 
+export PATH="/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 export UV_TOOL_DIR=/opt/lugnut/tools
 export UV_TOOL_BIN_DIR=/usr/local/bin
 export UV_PYTHON_INSTALL_DIR=/opt/lugnut/python
