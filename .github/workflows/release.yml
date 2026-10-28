@@ -131,9 +131,9 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: |
-          gh release upload "$TAG" dist/* web/* --clobber
+          gh release upload "$TAG" dist/*.whl dist/*.tar.gz web/*.zip --clobber
           if [[ "$VERSION" == *rc* ]]; then
             gh release edit "$TAG" --draft=false --prerelease
           else
-            gh release edit "$TAG" --draft=false
+            gh release edit "$TAG" --draft=false --prerelease=false --latest
           fi

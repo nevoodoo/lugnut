@@ -19,6 +19,8 @@ workflows:
         - 'actions/upload-pages-artifact@v5.0.0'
         - 'astral-sh/setup-uv@v10.3.1'
     '.github/workflows/release-please.yml':
+        - 'actions/checkout@v7.0.1'
+        - 'astral-sh/setup-uv@v10.3.1'
         - 'googleapis/release-please-action@v5.0.0'
     '.github/workflows/release.yml':
         - 'actions/attest-build-provenance@v4.2.2'
