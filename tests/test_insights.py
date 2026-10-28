@@ -181,9 +181,24 @@ def test_insights_api_us_units(client, logged_in):
             headers=CSRF,
         )
         assert r.status_code == 201, r.text
+    r = client.post(
+        f"/api/vehicles/{vid}/records",
+        json={
+            "type": "work",
+            "date": "2026-09-25",
+            "cost": 6000,
+            "details": {
+                "category": "service",
+                "line_items": [{"job_type_id": 1, "cost": 1200, "quantity": 5}],
+            },
+        },
+        headers=CSRF,
+    )
+    assert r.status_code == 201, r.text
     r = client.get(f"/api/vehicles/{vid}/insights")
     assert r.status_code == 200
     body = r.json()
+    assert body["repeat_jobs"][0]["avg_cost"] == 6000
     assert body["economy_unit"] == "mpg" and body["lower_is_better"] is False
     assert body["economy"]["average"] == pytest.approx(600 / 22, rel=1e-3)
     assert body["all_time"]["distance"] == pytest.approx(600, abs=0.1)

@@ -57,7 +57,7 @@ function Stats({ vehicleId }: { vehicleId: number }) {
           <span className="mono">{na(perDistance(d.this_year.per_distance, m, d.distance_unit))}</span>
         </li>
         <li className="row">
-          <span>Cost since purchase</span>
+          <span>Cost all time</span>
           <span className="mono">{na(perDistance(d.all_time.per_distance, m, d.distance_unit))}</span>
         </li>
       </ul>

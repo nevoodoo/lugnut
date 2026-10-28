@@ -4,7 +4,7 @@ Each vehicle has an Insights page, and the vehicle's home screen shows a short v
 
 ## Fuel economy
 
-Economy is worked out from full tank to full tank. When you fill up to full, Lugnut adds the fuel from every fill since the previous full one, including partial fills in between, and divides by the distance driven. The average covers all of those stretches. "Recent" is the average of the last five, and the change shows how far it is from the overall average. Whether up is good depends on your unit: lower is better for L/100km, higher is better for mpg.
+Economy is worked out from full tank to full tank. When you fill up to full, Lugnut adds the fuel from every fill since the previous full one, including partial fills in between, and divides by the distance driven. The average covers all of those stretches. "Recent" is the average of the last five, leaving out odd tanks, and the change shows how far it is from the overall average. Whether up is good depends on your unit: lower is better for L/100km, higher is better for mpg.
 
 A fill is skipped when:
 
@@ -32,6 +32,6 @@ Jobs with the same job type on work records are grouped. For each one you see ho
 
 This lists your open reminders with a projected date. Date reminders use their due date. Distance reminders are projected from how far you drove over the last year, which needs readings spanning at least 30 days. Without that, the reminder shows "No date yet".
 
-Reminders due within 30 days of each other are grouped, with a note that doing them in one visit could save a trip.
+Reminders are grouped when each one is due within 30 days of the one before it, with a note that doing them in one visit could save a trip.
 
 Each reminder shows what the same job cost last time. Lugnut matches it by the reminder's title or job type. For registration, insurance and inspection expiry reminders it uses the latest record of that type instead. If nothing matches, it says so.

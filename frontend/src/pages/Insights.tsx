@@ -114,7 +114,7 @@ function Upcoming({ d, m, s }: { d: InsightsData; m: Money; s: Dates }) {
         const known = items.reduce((sum, u) => sum + (u.last_cost ?? 0), 0);
         return (
           <div key={g.join("-")} className="ins-group">
-            <p>These are due within a month of each other. Doing them in one visit could save a trip.</p>
+            <p>These are due close together. Doing them in one visit could save a trip.</p>
             <ul className="rows">{items.map(row)}</ul>
             {known > 0 && <p className="mono ins-sub">Known costs: {formatMoney(known, m)}</p>}
           </div>

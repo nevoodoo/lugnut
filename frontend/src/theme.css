@@ -1272,7 +1272,6 @@ a.rec:hover .rec-title {
   align-items: flex-start;
 }
 .ins-up a {
-  min-height: 0;
   font-weight: 600;
 }
 .ins-group {

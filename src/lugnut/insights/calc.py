@@ -10,6 +10,7 @@ SPEND_TYPES = {"fuel", "registration", "insurance", "inspection", "toll", "parki
 OUTLIER_SEGMENTS = 5
 OUTLIER_RATIO = 0.25
 GROUP_GAP_DAYS = 30
+RECENT_SEGMENTS = 5
 MIN_RATE_DAYS = 30
 
 
@@ -104,10 +105,6 @@ def _spends(rows: Sequence[Row]) -> list[_Spend]:
     return out
 
 
-def spend(rows: Sequence[Row]) -> list[Row]:
-    return [s.row for s in _spends(rows)]
-
-
 def _per_km(total: int, distance: float | None) -> float | None:
     return total / distance if distance else None
 
@@ -170,9 +167,9 @@ def ownership(
     sold_price: int | None,
     today: dt.date,
 ) -> Ownership:
-    spent = _spends(rows)
-    running = sum(s.cost for s in spent)
     end = sold_date or today
+    spent = [s for s in _spends(rows) if s.date <= end]
+    running = sum(s.cost for s in spent)
     start = purchase_date or min((s.date for s in spent), default=None)
     dist = distance_km(rows, None, end)
     total = None if purchase_price is None else purchase_price + running - (sold_price or 0)
@@ -226,13 +223,13 @@ def economy(rows: Sequence[Row]) -> Economy:
         )
         for (d, o, dist, lt), ratio in zip(raw, ratios, strict=True)
     ]
-    recent = ratios[-5:]
+    steady = [s.litres / s.distance_km for s in segments if not s.outlier][-RECENT_SEGMENTS:]
     missing = ["no_fuel"] if not fills else ["not_enough_full_fills"] if not segments else []
     return Economy(
         segments,
         sum(s.litres for s in segments),
         sum(s.distance_km for s in segments),
-        sum(recent) / len(recent) if len(segments) >= 2 else None,
+        sum(steady) / len(steady) if len(steady) >= 2 else None,
         skipped,
         missing,
     )
@@ -335,7 +332,7 @@ def _last_cost(reminder: Due, spent: Sequence[_Spend]) -> int | None:
         if _norm(s.row.title) == title:
             return s.cost
         for i in s.row.items:
-            if title in (_norm(i.job_type), _norm(i.description)):
+            if i.cost is not None and title in (_norm(i.job_type), _norm(i.description)):
                 return i.cost
     return None
 

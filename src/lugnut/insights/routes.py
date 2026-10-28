@@ -123,7 +123,9 @@ def _rows(db: DB, vehicle_id: int) -> list[calc.Row]:
             {**r.details, "volume": r.details.get("volume_l")},
             tuple(
                 calc.Item(
-                    names.get(i.job_type_id) if i.job_type_id else None, i.description, i.cost
+                    names.get(i.job_type_id) if i.job_type_id else None,
+                    i.description,
+                    None if i.cost is None else round(i.cost * (i.quantity or 1)),
                 )
                 for i in r.line_items
             ),
@@ -134,6 +136,10 @@ def _rows(db: DB, vehicle_id: int) -> list[calc.Row]:
 
 def _distance(km: float | None, unit: DistanceUnit) -> float | None:
     return None if km is None else km_to(km, unit)
+
+
+def _adjusted(km: float | None, v: Vehicle) -> float | None:
+    return None if km is None else km + v.odometer_adjustment_km
 
 
 def _per_distance(per_km: float | None, unit: DistanceUnit) -> float | None:
@@ -159,7 +165,7 @@ def _economy_fn(unit: DistanceUnit, volume_unit: VolumeUnit) -> tuple[EconomyUni
 
 
 def _economy(
-    e: calc.Economy, unit: DistanceUnit, volume_unit: VolumeUnit, convert: Convert
+    e: calc.Economy, unit: DistanceUnit, volume_unit: VolumeUnit, convert: Convert, adjust: float
 ) -> EconomyOut:
     average = convert(e.litres, e.distance_km) if e.distance_km else None
     recent = None if e.recent_litres_per_km is None else convert(e.recent_litres_per_km, 1.0)
@@ -171,7 +177,7 @@ def _economy(
         segments=[
             SegmentOut(
                 date=s.date,
-                odometer=km_to(s.odometer_km, unit),
+                odometer=km_to(s.odometer_km + adjust, unit),
                 distance=km_to(s.distance_km, unit),
                 volume=l_to(s.litres, volume_unit),
                 value=convert(s.litres, s.distance_km),
@@ -223,18 +229,20 @@ def get_insights(_: Reader, db: DB, vehicle_id: int) -> InsightsOut:
             else round(own.total / own.months),
             missing=own.missing,
         ),
-        economy=_economy(calc.economy(rows), unit, install.volume_unit, convert),
+        economy=_economy(
+            calc.economy(rows), unit, install.volume_unit, convert, v.odometer_adjustment_km
+        ),
         repeat_jobs=[
             RepeatJobOut(
                 name=j.name,
                 count=j.count,
                 last_date=j.last_date,
-                last_odometer=_distance(j.last_odometer_km, unit),
+                last_odometer=_distance(_adjusted(j.last_odometer_km, v), unit),
                 avg_days=j.avg_days,
                 avg_distance=_distance(j.avg_km, unit),
                 avg_cost=j.avg_cost,
                 next_date=j.next_date,
-                next_odometer=_distance(j.next_km, unit),
+                next_odometer=_distance(_adjusted(j.next_km, v), unit),
             )
             for j in calc.repeat_jobs(rows)
         ],
