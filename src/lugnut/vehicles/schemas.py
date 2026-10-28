@@ -8,7 +8,7 @@ from lugnut.timeutil import UtcDatetime
 from lugnut.units import DistanceUnit, km_from, km_to
 from lugnut.vehicles.models import Vehicle
 
-FuelType = Literal["petrol", "diesel", "electric", "hybrid", "lpg"]
+FuelType = Literal["petrol", "diesel", "hybrid", "lpg"]
 
 
 class VehicleFields(BaseModel):

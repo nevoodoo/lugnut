@@ -61,17 +61,9 @@ class WorkDetails(Details):
 
 
 class FuelDetails(Details):
-    volume: float | None = Field(None, gt=0)  # install volume unit in the API, litres in the DB
+    volume: float = Field(gt=0)  # install volume unit in the API, litres in the DB
     full_tank: bool = True
     missed_previous: bool = False
-    charge_start_pct: float | None = Field(None, ge=0, le=100)
-    charge_end_pct: float | None = Field(None, ge=0, le=100)
-
-    @model_validator(mode="after")
-    def _volume_or_charge(self) -> "FuelDetails":
-        if self.volume is None and self.charge_end_pct is None:
-            raise ValueError("volume is required unless charge_end_pct is set")
-        return self
 
 
 class NoDetails(Details):
@@ -201,7 +193,7 @@ def to_row_values(
     details = body.details.model_dump(mode="json", exclude={"line_items"})
     if body.type == "fuel":
         v = details.pop("volume")
-        details["volume_l"] = None if v is None else l_from(v, install.volume_unit)
+        details["volume_l"] = l_from(v, install.volume_unit)
     values["details"] = details
     return values
 
@@ -216,7 +208,7 @@ def to_out(r: Record, install: InstallSettings) -> RecordOut:
     stored = dict(r.details)
     if r.type == "fuel":
         litres = stored.pop("volume_l")
-        stored["volume"] = None if litres is None else round(l_to(litres, install.volume_unit), 3)
+        stored["volume"] = round(l_to(litres, install.volume_unit), 3)
     # Re-validate so details written before a field was added still come back complete.
     details = DETAILS[r.type].model_validate(stored).model_dump(mode="json", exclude={"line_items"})
     if r.type == "work":
