@@ -35,7 +35,13 @@ class VehicleFields(BaseModel):
     archived: bool = False
 
 
-SERVER_FIELDS = {"id", "created_at", "photo_attachment_id", "distance_unit_effective"}
+SERVER_FIELDS = {
+    "id",
+    "created_at",
+    "photo_attachment_id",
+    "distance_unit_effective",
+    "current_odometer",
+}
 
 
 class VehicleIn(VehicleFields):
@@ -56,6 +62,9 @@ class VehicleOut(VehicleFields):
     id: int
     odometer_adjustment: float
     distance_unit_effective: DistanceUnit
+    current_odometer: float | None = Field(
+        description="Highest recorded odometer plus the adjustment, in distance_unit_effective."
+    )
     photo_attachment_id: int | None
     created_at: UtcDatetime
 
@@ -71,8 +80,13 @@ def to_row_values(body: VehicleIn, install: InstallSettings) -> dict[str, object
     return values
 
 
-def to_out(v: Vehicle, install: InstallSettings) -> VehicleOut:
+def to_out(v: Vehicle, install: InstallSettings, current_km: float | None) -> VehicleOut:
     unit = effective_unit(v.distance_unit, install)
     data = {c.name: getattr(v, c.name) for c in Vehicle.__table__.columns}
     km = data.pop("odometer_adjustment_km")
-    return VehicleOut(**data, odometer_adjustment=km_to(km, unit), distance_unit_effective=unit)
+    return VehicleOut(
+        **data,
+        odometer_adjustment=km_to(km, unit),
+        distance_unit_effective=unit,
+        current_odometer=None if current_km is None else km_to(current_km, unit),
+    )

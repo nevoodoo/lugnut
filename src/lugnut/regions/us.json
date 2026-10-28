@@ -4,6 +4,7 @@
   "currency": "USD",
   "distance_unit": "mi",
   "volume_unit": "gal_us",
+  "timezone": "America/New_York",
   "date_format": "MM/DD/YYYY",
   "labels": {
     "registration": "Registration",

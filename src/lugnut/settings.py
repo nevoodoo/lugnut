@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     host: str = "127.0.0.1"
     port: int = 8080
     secure_cookies: bool = True
+    reminder_interval_seconds: int = 3600  # 0 turns the reminder loop off
 
     @property
     def db_path(self) -> Path:

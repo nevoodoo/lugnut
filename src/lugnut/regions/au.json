@@ -4,6 +4,7 @@
   "currency": "AUD",
   "distance_unit": "km",
   "volume_unit": "L",
+  "timezone": "Australia/Sydney",
   "date_format": "DD/MM/YYYY",
   "labels": {
     "registration": "Rego",

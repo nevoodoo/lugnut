@@ -4,6 +4,7 @@
   "currency": "GBP",
   "distance_unit": "mi",
   "volume_unit": "L",
+  "timezone": "Europe/London",
   "date_format": "DD/MM/YYYY",
   "labels": {
     "registration": "Vehicle tax",

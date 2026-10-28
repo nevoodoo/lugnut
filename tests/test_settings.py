@@ -12,3 +12,7 @@ def test_region_switch_fills_defaults_but_keeps_explicit_fields(client, logged_i
     client.put("/api/settings", json={"region": "us", "currency": "AUD"}, headers=CSRF)
     s = client.get("/api/settings").json()
     assert (s["distance_unit"], s["currency"]) == ("mi", "AUD")
+    assert s["timezone"] == "America/New_York"
+    bad = client.put("/api/settings", json={"timezone": "Mars/Base"}, headers=CSRF)
+    assert bad.status_code == 422
+    assert bad.json()["detail"][0]["loc"] == ["body", "timezone"]
