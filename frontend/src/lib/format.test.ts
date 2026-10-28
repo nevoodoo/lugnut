@@ -4,11 +4,13 @@ import type { InstallSettings as S } from "./format";
 
 test("parseMoney accepts common forms and rejects garbage", () => {
   // catches: money saved as 0 or off by 100x
-  for (const t of ["1,284.50", "1284.5", "$1284.50", " 1284.50 "]) expect(parseMoney(t)).toBe(128450);
-  expect(parseMoney("1284")).toBe(128400);
-  expect(parseMoney("")).toBeNull();
-  expect(parseMoney("12.345")).toBe("invalid");
-  expect(parseMoney("abc")).toBe("invalid");
+  for (const t of ["1,284.50", "1284.5", "$1284.50", " 1284.50 "]) expect(parseMoney(t, "AUD")).toBe(128450);
+  expect(parseMoney("1284", "AUD")).toBe(128400);
+  expect(parseMoney("", "AUD")).toBeNull();
+  expect(parseMoney("12.345", "AUD")).toBe("invalid");
+  expect(parseMoney("abc", "AUD")).toBe("invalid");
+  expect(parseMoney("1,284", "JPY")).toBe(1284);
+  expect(parseMoney("12.5", "JPY")).toBe("invalid");
 });
 
 test("formatDate follows install format", () => {

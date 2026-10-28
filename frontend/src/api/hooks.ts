@@ -67,10 +67,13 @@ export const useSaveVehicle = () =>
   useWrite(
     ({ id, body }: { id?: number; body: VehicleIn }) =>
       api<Vehicle>(id ? `/vehicles/${id}` : "/vehicles", id ? "PUT" : "POST", body),
-    [["vehicles"]],
+    [["vehicles"], ["records"], ["record"], ["reminders"]],
   );
 export const useDeleteVehicle = () =>
-  useWrite((id: number) => api<void>(`/vehicles/${id}`, "DELETE"), [["vehicles"], ["records"], ["reminders"]]);
+  useWrite(
+    (id: number) => api<void>(`/vehicles/${id}`, "DELETE"),
+    [["vehicles"], ["records"], ["record"], ["reminders"]],
+  );
 
 export const useSaveRecord = () =>
   useWrite(
@@ -111,7 +114,10 @@ export const useDeleteReminder = () =>
   useWrite((id: number) => api<void>(`/reminders/${id}`, "DELETE"), [["reminders"]]);
 
 export const useSaveSettings = () =>
-  useWrite((body: S["SettingsIn"]) => api<Settings>("/settings", "PUT", body), [["settings"], ["vehicles"], ["records"], ["reminders"]]);
+  useWrite(
+    (body: S["SettingsIn"]) => api<Settings>("/settings", "PUT", body),
+    [["settings"], ["vehicles"], ["records"], ["record"], ["reminders"]],
+  );
 export const useSetDiscord = () =>
   useWrite((url: string | null) => api<Settings>("/settings/discord", "PUT", { url }), [["settings"]]);
 export const useTestDiscord = () =>

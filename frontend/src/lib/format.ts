@@ -6,19 +6,25 @@ type Unit = InstallSettings["distance_unit"] | InstallSettings["volume_unit"];
 const UNIT_LABELS: Record<Unit, string> = { km: "km", mi: "mi", L: "L", gal_us: "gal", gal_imp: "gal (UK)" };
 export const unitLabel = (unit: Unit): string => UNIT_LABELS[unit];
 
-// Money is integer minor units with two decimals, in every currency the API serves.
+// Money is integer minor units; the decimal places follow the currency (JPY 0, AUD 2).
+const currencyDigits = (currency: string): number =>
+  new Intl.NumberFormat(undefined, { style: "currency", currency }).resolvedOptions().maximumFractionDigits ?? 2;
+
 export function formatMoney(minor: number | null, s: Pick<InstallSettings, "currency">): string {
   if (minor === null) return "";
-  return new Intl.NumberFormat(undefined, { style: "currency", currency: s.currency }).format(minor / 100);
+  const d = currencyDigits(s.currency);
+  return new Intl.NumberFormat(undefined, { style: "currency", currency: s.currency }).format(minor / 10 ** d);
 }
 
 // Decimal text from a form field to minor units. Empty is "no value", anything odd is "invalid".
-export function parseMoney(text: string): number | null | "invalid" {
+export function parseMoney(text: string, currency: string): number | null | "invalid" {
   const t = text.trim();
   if (t === "") return null;
-  const m = /^[^\d\s,.-]?\s*(\d{1,3}(?:,\d{3})+|\d+)(?:\.(\d{1,2}))?$/.exec(t);
+  const d = currencyDigits(currency);
+  const frac = d ? `(?:\\.(\\d{1,${d}}))?` : "()";
+  const m = new RegExp(`^[^\\d\\s,.-]?\\s*(\\d{1,3}(?:,\\d{3})+|\\d+)${frac}$`).exec(t);
   if (!m) return "invalid";
-  return Number(m[1].replace(/,/g, "")) * 100 + Number((m[2] ?? "").padEnd(2, "0"));
+  return Number(m[1].replace(/,/g, "")) * 10 ** d + Number((m[2] ?? "").padEnd(d, "0") || 0);
 }
 
 export function formatDate(iso: string | null, s: Pick<InstallSettings, "date_format">): string {
