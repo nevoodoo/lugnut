@@ -26,14 +26,26 @@ UNDATED = {"todo", "note"}
 SERVER_FIELDS = {"id", "vehicle_id", "created_at", "updated_at"}
 
 
-class LineItemIn(BaseModel):
+class LineItemFields(BaseModel):
     job_type_id: int | None = None
     description: str | None = None
     cost: int | None = None
     quantity: float | None = None
 
 
-class LineItemOut(LineItemIn):
+class LineItemIn(LineItemFields):
+    model_config = ConfigDict(extra="forbid")
+
+    @model_validator(mode="before")
+    @classmethod
+    def _drop_id(cls, data: Any) -> Any:
+        # A GET body must PUT back as-is, so ignore the key the server sets.
+        if isinstance(data, dict):
+            return {k: v for k, v in data.items() if k != "id"}
+        return data
+
+
+class LineItemOut(LineItemFields):
     id: int
 
 

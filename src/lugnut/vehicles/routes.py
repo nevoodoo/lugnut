@@ -3,10 +3,9 @@ from sqlalchemy import select
 
 from lugnut.attachments import storage
 from lugnut.attachments.models import Attachment
-from lugnut.auth.deps import DB
+from lugnut.auth.deps import DB, utcnow
 from lugnut.auth.routes import Reader, Writer
 from lugnut.settings_api import get_install_settings
-from lugnut.timeutil import utcnow
 from lugnut.vehicles.models import Vehicle
 from lugnut.vehicles.schemas import VehicleIn, VehicleOut, to_out, to_row_values
 
@@ -30,7 +29,7 @@ def list_vehicles(_: Reader, db: DB, archived: bool = False) -> list[VehicleOut]
 @router.post("", status_code=201)
 def create_vehicle(body: VehicleIn, _: Writer, db: DB) -> VehicleOut:
     install = get_install_settings(db)
-    v = Vehicle(**to_row_values(body, install), created_at=utcnow().replace(tzinfo=None))
+    v = Vehicle(**to_row_values(body, install), created_at=utcnow())
     db.add(v)
     db.commit()
     return to_out(v, install)

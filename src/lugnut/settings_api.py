@@ -2,8 +2,9 @@ import json
 from importlib.resources import files
 from typing import Any, Literal
 
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, Field
+from fastapi import APIRouter
+from fastapi.exceptions import RequestValidationError
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.orm import Session
 
 from lugnut.auth.deps import DB
@@ -32,6 +33,8 @@ class InstallSettings(BaseModel):
 
 
 class SettingsIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     region: str | None = None
     currency: str | None = Field(None, pattern=r"^[A-Z]{3}$")
     distance_unit: Literal["km", "mi"] | None = None
@@ -63,7 +66,16 @@ def read_settings(_: Reader, db: DB) -> InstallSettings:
 def replace_settings(body: SettingsIn, _: Writer, db: DB) -> InstallSettings:
     code = body.region or get_install_settings(db).region
     if code not in load_regions():
-        raise HTTPException(422, f"Unknown region {code!r}")
+        raise RequestValidationError(
+            [
+                {
+                    "type": "value_error",
+                    "loc": ("body", "region"),
+                    "msg": f"Unknown region {code!r}",
+                    "input": code,
+                }
+            ]
+        )
     new = _defaults(code).model_copy(update=body.model_dump(exclude_none=True))
     value = new.model_dump()
     row = db.get(Setting, KEY)

@@ -3,6 +3,7 @@ from pathlib import PurePath
 from typing import Annotated
 
 from fastapi import APIRouter, Form, HTTPException, Request, UploadFile
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
@@ -39,6 +40,10 @@ def _get(db: DB, attachment_id: int) -> Attachment:
     return a
 
 
+def _invalid(loc: tuple[str, ...], msg: str, value: object) -> RequestValidationError:
+    return RequestValidationError([{"type": "value_error", "loc": loc, "msg": msg, "input": value}])
+
+
 def _out(a: Attachment) -> AttachmentOut:
     return AttachmentOut.model_validate(a, from_attributes=True)
 
@@ -57,7 +62,7 @@ def upload_attachment(
     if record_id is not None:
         rec = db.get(Record, record_id)
         if rec is None or rec.vehicle_id != vehicle_id:
-            raise HTTPException(422, "record_id is not a record of this vehicle")
+            raise _invalid(("body", "record_id"), "record_id is not a record of this vehicle", record_id)
     settings = request.app.state.settings
     stored_name, content_type, size, sha256 = storage.save(settings, file)
     a = Attachment(
@@ -119,7 +124,11 @@ def set_photo(vehicle_id: int, body: PhotoIn, _: Writer, db: DB) -> dict[str, in
     if body.attachment_id is not None:
         a = db.get(Attachment, body.attachment_id)
         if a is None or a.vehicle_id != vehicle_id or not a.content_type.startswith("image/"):
-            raise HTTPException(422, "attachment_id must be an image attachment of this vehicle")
+            raise _invalid(
+                ("body", "attachment_id"),
+                "attachment_id must be an image attachment of this vehicle",
+                body.attachment_id,
+            )
     v.photo_attachment_id = body.attachment_id
     db.commit()
     return {"photo_attachment_id": v.photo_attachment_id}

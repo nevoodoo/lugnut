@@ -1,7 +1,7 @@
 from datetime import date
-from typing import Literal
+from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from lugnut.settings_api import InstallSettings
 from lugnut.timeutil import UtcDatetime
@@ -11,9 +11,7 @@ from lugnut.vehicles.models import Vehicle
 FuelType = Literal["petrol", "diesel", "electric", "hybrid", "lpg"]
 
 
-class VehicleIn(BaseModel):
-    """PUT replaces the whole vehicle, so omitted fields reset to these defaults."""
-
+class VehicleFields(BaseModel):
     name: str = Field(min_length=1)
     year: int | None = None
     make: str | None = None
@@ -28,12 +26,33 @@ class VehicleIn(BaseModel):
     purchase_price: int | None = None
     sold_date: date | None = None
     sold_price: int | None = None
-    odometer_adjustment: float = 0
+    odometer_adjustment: float = Field(
+        0,
+        description="Read and returned in distance_unit_effective. A PUT that changes "
+        "distance_unit must send the adjustment in the new unit.",
+    )
     custom_fields: dict[str, str] = Field(default_factory=dict)
     archived: bool = False
 
 
-class VehicleOut(VehicleIn):
+SERVER_FIELDS = {"id", "created_at", "photo_attachment_id", "distance_unit_effective"}
+
+
+class VehicleIn(VehicleFields):
+    """PUT replaces the whole vehicle, so omitted fields reset to these defaults."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    @model_validator(mode="before")
+    @classmethod
+    def _drop_server_fields(cls, data: Any) -> Any:
+        # A GET body must PUT back as-is, so ignore the keys the server sets.
+        if isinstance(data, dict):
+            return {k: v for k, v in data.items() if k not in SERVER_FIELDS}
+        return data
+
+
+class VehicleOut(VehicleFields):
     id: int
     odometer_adjustment: float
     distance_unit_effective: DistanceUnit
