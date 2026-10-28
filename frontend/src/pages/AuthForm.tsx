@@ -53,10 +53,8 @@ export function AuthForm(props: {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             autoComplete={props.newPassword ? "new-password" : "current-password"}
-            minLength={props.newPassword ? 12 : undefined}
             required
           />
-          {props.newPassword && <small>At least 12 characters.</small>}
         </label>
         {m.error && (
           <p className="error" role="alert">
