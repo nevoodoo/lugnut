@@ -149,3 +149,9 @@ def test_upcoming_projection_and_groups():
     assert items[0].projected_date == D(2026, 1, 21) and items[0].last_cost == 9500
     assert items[1].last_cost == 80000 and items[3].projected_date is None
     assert groups == [[1, 2]]
+
+
+def test_economy_skips_fill_without_volume():
+    rows = [fuel(1, 1000, 40), fuel(2, 1200, 0), fuel(3, 1500, 30), fuel(4, 2000, 35)]
+    e = economy(rows)
+    assert [s.distance_km for s in e.segments] == [300, 500] and e.skipped == 1

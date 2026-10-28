@@ -10,6 +10,7 @@ SPEND_TYPES = {"fuel", "registration", "insurance", "inspection", "toll", "parki
 OUTLIER_SEGMENTS = 5
 OUTLIER_RATIO = 0.25
 GROUP_GAP_DAYS = 30
+MIN_RATE_DAYS = 30
 
 
 @dataclass(frozen=True)
@@ -128,9 +129,11 @@ def distance_km(rows: Sequence[Row], start: dt.date | None, end: dt.date) -> flo
     before = [o for d, o in readings if start and d <= start]
     inside = [o for d, o in readings if start is None or d > start]
     if before and inside:
-        return max(inside) - before[-1]
+        dist = max(inside) - before[-1]
+        return dist if dist > 0 else None
     if not before and len(inside) >= 2:
-        return max(inside) - min(inside)
+        dist = max(inside) - min(inside)
+        return dist if dist > 0 else None
     return None
 
 
@@ -197,12 +200,18 @@ def economy(rows: Sequence[Row]) -> Economy:
     for r in fills:
         full = r.details.get("full_tank", True)
         odo = r.odometer_km
+        volume = r.details.get("volume") or 0
         if open_odo is not None:
-            if odo is None or r.details.get("missed_previous") or (full and odo <= open_odo):
+            if (
+                odo is None
+                or not volume
+                or r.details.get("missed_previous")
+                or (full and odo <= open_odo)
+            ):
                 skipped += 1
                 open_odo = None
             else:
-                litres += r.details.get("volume") or 0
+                litres += volume
                 if full:
                     raw.append((r.date, odo, odo - open_odo, litres))
                     open_odo, litres = odo, 0.0
@@ -212,7 +221,9 @@ def economy(rows: Sequence[Row]) -> Economy:
     ratios = [lt / d for _, _, d, lt in raw]
     mid = median(ratios) if len(raw) >= OUTLIER_SEGMENTS else None
     segments = [
-        Segment(d, o, dist, lt, mid is not None and abs(ratio - mid) / mid > OUTLIER_RATIO)
+        Segment(
+            d, o, dist, lt, mid is not None and mid > 0 and abs(ratio - mid) / mid > OUTLIER_RATIO
+        )
         for (d, o, dist, lt), ratio in zip(raw, ratios, strict=True)
     ]
     recent = ratios[-5:]
@@ -307,7 +318,7 @@ def km_per_day(rows: Sequence[Row], today: dt.date) -> float | None:
         return None
     days = (readings[-1][0] - readings[0][0]).days
     km = readings[-1][1] - readings[0][1]
-    return km / days if days and km > 0 else None
+    return km / days if days >= MIN_RATE_DAYS and km > 0 else None
 
 
 def _norm(text: str | None) -> str:
