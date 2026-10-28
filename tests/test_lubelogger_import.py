@@ -96,6 +96,11 @@ def test_malicious_zip_rejected(client, data_dir):
         bomb_zip(),
     ):
         assert upload(client, z).status_code in (413, 422)
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as zf:
+        for i in range(50_001):
+            zf.writestr(f"x{i}", b"")
+    assert upload(client, buf.getvalue()).status_code == 413
     assert not (data_dir.parent / "evil.txt").exists()
     assert not (data_dir / "evil.txt").exists()
     assert not any((data_dir / "imports").iterdir())

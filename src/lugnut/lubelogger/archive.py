@@ -1,5 +1,6 @@
 """Safe extraction of a LubeLogger backup zip: only the members the import reads, size-capped."""
 
+import logging
 import os
 import re
 import zipfile
@@ -8,7 +9,9 @@ from typing import BinaryIO
 NEEDED = re.compile(r"data/cartracker\.db|config/userConfig\.json|(documents|images)/[^/]+")
 MAX_MEMBER = 100 * 2**20
 MAX_TOTAL = 2 * 2**30
+MAX_MEMBERS = 50_000
 _CHUNK = 64 * 1024
+log = logging.getLogger(__name__)
 
 
 class ArchiveError(ValueError):
@@ -33,6 +36,10 @@ def extract(src: BinaryIO, dest: str) -> None:
     except (zipfile.BadZipFile, OSError):
         raise ArchiveError("not a zip file") from None
     with zf:
+        # ponytail: ZipFile has already parsed the central directory here, so this bounds the
+        # work after opening, not the parse itself (that stays bounded by the 1 GiB body cap)
+        if len(zf.infolist()) > MAX_MEMBERS:
+            raise ArchiveError("backup has too many files", 413)
         members = zf.infolist()
         for info in members:  # check every path first, wanted or not
             _target(base, info.filename.replace("\\", "/"))
@@ -55,7 +62,8 @@ def extract(src: BinaryIO, dest: str) -> None:
             except FileExistsError:
                 raise ArchiveError(f"backup lists {name} twice") from None
             except (zipfile.BadZipFile, EOFError, NotImplementedError, OSError) as e:
-                raise ArchiveError(f"could not read {name} from the backup: {e}") from None
+                log.warning("could not extract %s: %s", name, e)
+                raise ArchiveError(f"could not read {name} from the backup") from None
     if not os.path.isfile(base + "data/cartracker.db"):
         raise ArchiveError("backup has no data/cartracker.db")
 

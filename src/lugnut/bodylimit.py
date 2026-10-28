@@ -20,6 +20,8 @@ class BodyLimit:
             await self.app(scope, receive, send)
             return
         rejected = started = False
+        # ponytail: matches the full scope["path"]; behind a proxy with a root_path the import
+        # gets the default limit (fails closed). Strip root_path here if that setup is needed.
         limit = self.path_limits.get(scope.get("path", ""), self.limit)
 
         async def reject() -> None:

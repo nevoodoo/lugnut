@@ -90,6 +90,7 @@ def _import_dir(settings: Settings, token: str) -> str:
     full = os.path.normpath(os.path.join(base, token))
     if not full.startswith(base) or not TOKEN.fullmatch(token) or not os.path.isdir(full):
         raise HTTPException(404, "Import not found; upload the backup again")
+    os.utime(full)  # in use, so the 24-hour sweep leaves it alone
     return full
 
 
@@ -257,6 +258,8 @@ class _Commit:
                     if photo is not None and photo.content_type.startswith("image/"):
                         db.flush()
                         v.photo_attachment_id = photo.id
+                    elif photo is not None:
+                        self.warn(f"{pv.vehicle['name']}: photo is not an image; kept as a file")
             unit = pv.vehicle["distance_unit"]  # the plan's distances are in this unit
             for rec in pv.records:
                 sid = rec["source_id"]
