@@ -1,4 +1,5 @@
 import json
+import logging
 import re
 from importlib.resources import files
 from typing import Any, Literal
@@ -184,5 +185,7 @@ def test_discord(_: Writer, db: DB) -> dict[str, Any]:
     try:
         discord_send(url, {"content": "Lugnut test message", "allowed_mentions": {"parse": []}})
     except NotifyError as e:
-        return {"ok": False, "error": str(e)}
+        # The reason goes to the server log only; the response stays fixed.
+        logging.getLogger(__name__).warning("discord test failed: %s", e)
+        return {"ok": False, "error": "Discord did not accept the message. Check the webhook URL."}
     return {"ok": True}
