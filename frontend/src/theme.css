@@ -976,6 +976,11 @@ a.rec:hover .rec-title {
 .attachments .row a {
   overflow-wrap: anywhere;
 }
+.link-tap {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
 
 /* Quick fuel */
 .quickfuel {
@@ -1000,6 +1005,12 @@ a.rec:hover .rec-title {
   font-size: 1.125rem;
   margin-top: 0.5rem;
   box-shadow: 0 0 0 0.5rem var(--paper);
+}
+/* Room under the form so the sticky Save covers nothing at rest. */
+@media (max-width: 899px) {
+  .quickfuel {
+    padding-bottom: 5rem;
+  }
 }
 @media (min-width: 900px) {
   .btn.thumb {
@@ -1168,4 +1179,9 @@ a.rec:hover .rec-title {
   border: 0;
   padding: 0;
   background: transparent;
+}
+.token-new-head {
+  margin: 1.25rem 0 0.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--rule);
 }

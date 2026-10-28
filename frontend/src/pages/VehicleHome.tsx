@@ -17,13 +17,13 @@ function Due({ vehicleId, s }: { vehicleId: number; s: InstallSettings }) {
   const { data } = useReminders({ vehicle_id: vehicleId });
   if (!data?.length) return null;
   return (
-    <Card label="Due">
+    <Card label="Coming up">
       <ul className="rows">
         {data.map((r) => (
           <ReminderRow key={r.id} r={r} s={s} />
         ))}
       </ul>
-      <Link to={`/vehicles/${vehicleId}/reminders/new`}>Add a reminder</Link>
+      <Link className="link-tap" to={`/vehicles/${vehicleId}/reminders/new`}>Add a reminder</Link>
     </Card>
   );
 }
@@ -35,11 +35,19 @@ function Recent({ vehicleId, unit }: { vehicleId: number; unit: "km" | "mi" }) {
     <section className="card recent">
       <div className="page-head">
         <h2 className="label">Recent records</h2>
-        <Link to={`/vehicles/${vehicleId}/records`}>All records</Link>
+        <Link className="link-tap" to={`/vehicles/${vehicleId}/records`}>All records</Link>
       </div>
       <RecordRows records={data} unit={unit} />
     </section>
   );
+}
+
+// Shown only when the vehicle has neither records nor reminders.
+function Empty({ vehicleId }: { vehicleId: number }) {
+  const records = useRecords(vehicleId, { limit: 5 });
+  const reminders = useReminders({ vehicle_id: vehicleId });
+  if (!records.data || !reminders.data || records.data.length || reminders.data.length) return null;
+  return <p className="muted">Nothing logged yet. Log fuel or add a record.</p>;
 }
 
 export function VehicleHome() {
@@ -105,6 +113,7 @@ export function VehicleHome() {
       <div className="vh-cards">
         <Due vehicleId={id} s={s} />
         <Recent vehicleId={id} unit={unit} />
+        <Empty vehicleId={id} />
       </div>
     </div>
   );

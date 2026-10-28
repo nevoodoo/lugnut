@@ -15,7 +15,7 @@ export function dueText(r: Reminder, s: InstallSettings): string {
   return [r.due_date ? formatDate(r.due_date, s) : "", r.due_km != null ? formatDistance(r.due_km, unit) : ""].filter(Boolean).join(" · ");
 }
 
-function DonePanel({ r, s, onClose }: { r: Reminder; s: InstallSettings; onClose: () => void }) {
+function DonePanel({ r, s, onClose, onDone }: { r: Reminder; s: InstallSettings; onClose: () => void; onDone: () => void }) {
   const complete = useCompleteReminder();
   const [date, setDate] = useState(() => today(s.timezone));
   const [odo, setOdo] = useState("");
@@ -32,7 +32,7 @@ function DonePanel({ r, s, onClose }: { r: Reminder; s: InstallSettings; onClose
     complete.mutate(
       { id: r.id, date: date || undefined, odometer: n ?? undefined },
       {
-        onSuccess: onClose,
+        onSuccess: onDone,
         onError: (err) => setErrs(err instanceof ApiError ? { ...fieldErrors(err.detail), form: err.message } : { form: err.message }),
       },
     );
@@ -69,12 +69,22 @@ export function ReminderRow({ r, s, plate }: { r: Reminder; s: InstallSettings; 
     setOpen(false);
     btn.current?.focus();
   };
+  // Marking done removes the button, so move focus to this row's title, or the page heading if the row is gone.
+  const finish = () => {
+    setOpen(false);
+    requestAnimationFrame(() => {
+      const el = document.getElementById(`rem-${r.id}`) ?? document.querySelector("h1");
+      if (!el) return;
+      if (!el.matches("a, button")) el.tabIndex = -1;
+      el.focus();
+    });
+  };
   const doneAt = r.completed_at;
   const done = doneAt !== null;
   return (
     <li className="rem">
       <div className="rem-main">
-        <Link className="rem-title" to={`/reminders/${r.id}`}>
+        <Link id={`rem-${r.id}`} className="rem-title" to={`/reminders/${r.id}`}>
           {r.title}
         </Link>
         {done ? <span className="stamp mono ok">Done</span> : <Stamp state={r.state}>{dueText(r, s)}</Stamp>}
@@ -88,7 +98,7 @@ export function ReminderRow({ r, s, plate }: { r: Reminder; s: InstallSettings; 
           </button>
         )}
       </div>
-      {open && <DonePanel r={r} s={s} onClose={close} />}
+      {open && <DonePanel r={r} s={s} onClose={close} onDone={finish} />}
     </li>
   );
 }

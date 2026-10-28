@@ -57,7 +57,7 @@ export function Attachments({ record, uploads }: { record?: LugnutRecord; upload
         <ul className="rows">
           {saved.map((a) => (
             <li key={a.id} className="row">
-              <a href={`/api/attachments/${a.id}/file`} target="_blank" rel="noreferrer">
+              <a className="link-tap" href={`/api/attachments/${a.id}/file`} target="_blank" rel="noreferrer">
                 {a.filename}
               </a>
               <span className="actions">

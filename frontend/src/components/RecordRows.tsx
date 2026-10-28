@@ -16,21 +16,23 @@ export function RecordRows({ records, unit }: { records: LugnutRecord[]; unit: "
         <span>Odometer</span>
         <span className="rec-cost">Cost</span>
       </li>
-      {records.map((r) => (
-        <li key={r.id}>
-          <Link className="rec" to={`/records/${r.id}`}>
-            <span className="rec-date mono">{formatDate(r.date ?? null, s)}</span>
-            <span className="rec-title">
-              {recordSummary(r, label(r.type), s)} <span className="tag">{label(r.type)}</span>
-              {r.is_estimate && <span className="stamp mono">est.</span>}
-            </span>
-            <span className="rec-odo mono">{r.odometer == null ? "n/a" : formatDistance(r.odometer, unit)}</span>
-            <span className="rec-cost mono">
-              {formatMoney(r.cost ?? null, s)}
-            </span>
-          </Link>
-        </li>
-      ))}
+      {records.map((r) => {
+        const type = label(r.type);
+        const summary = recordSummary(r, type, s);
+        return (
+          <li key={r.id}>
+            <Link className="rec" to={`/records/${r.id}`}>
+              <span className="rec-date mono">{formatDate(r.date ?? null, s)}</span>
+              <span className="rec-title">
+                {summary} {!summary.startsWith(type) && <span className="tag">{type}</span>}
+                {r.is_estimate && <span className="stamp mono">est.</span>}
+              </span>
+              <span className="rec-odo mono">{r.odometer == null ? "n/a" : formatDistance(r.odometer, unit)}</span>
+              <span className="rec-cost mono">{formatMoney(r.cost ?? null, s)}</span>
+            </Link>
+          </li>
+        );
+      })}
     </ul>
   );
 }
