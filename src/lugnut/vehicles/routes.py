@@ -7,6 +7,7 @@ from lugnut.auth.deps import DB, utcnow
 from lugnut.auth.routes import Reader, Writer
 from lugnut.settings_api import get_install_settings
 from lugnut.vehicles.models import Vehicle
+from lugnut.vehicles.odometer import current_odometer_km
 from lugnut.vehicles.schemas import VehicleIn, VehicleOut, to_out, to_row_values
 
 router = APIRouter(prefix="/api/vehicles")
@@ -23,7 +24,7 @@ def _get(db: DB, vehicle_id: int) -> Vehicle:
 def list_vehicles(_: Reader, db: DB, archived: bool = False) -> list[VehicleOut]:
     install = get_install_settings(db)
     rows = db.query(Vehicle).filter(Vehicle.archived == archived).order_by(Vehicle.id).all()
-    return [to_out(v, install) for v in rows]
+    return [to_out(v, install, current_odometer_km(db, v)) for v in rows]
 
 
 @router.post("", status_code=201)
@@ -32,12 +33,13 @@ def create_vehicle(body: VehicleIn, _: Writer, db: DB) -> VehicleOut:
     v = Vehicle(**to_row_values(body, install), created_at=utcnow())
     db.add(v)
     db.commit()
-    return to_out(v, install)
+    return to_out(v, install, current_odometer_km(db, v))
 
 
 @router.get("/{vehicle_id}")
 def read_vehicle(vehicle_id: int, _: Reader, db: DB) -> VehicleOut:
-    return to_out(_get(db, vehicle_id), get_install_settings(db))
+    v = _get(db, vehicle_id)
+    return to_out(v, get_install_settings(db), current_odometer_km(db, v))
 
 
 @router.put("/{vehicle_id}")
@@ -47,7 +49,7 @@ def replace_vehicle(vehicle_id: int, body: VehicleIn, _: Writer, db: DB) -> Vehi
     for k, val in to_row_values(body, install).items():
         setattr(v, k, val)
     db.commit()
-    return to_out(v, install)
+    return to_out(v, install, current_odometer_km(db, v))
 
 
 @router.delete("/{vehicle_id}", status_code=204)

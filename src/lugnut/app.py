@@ -12,6 +12,7 @@ from lugnut.db import get_engine
 from lugnut.migrate import upgrade_database
 from lugnut.records.job_types import router as job_types_router
 from lugnut.records.routes import router as records_router
+from lugnut.reminders.routes import router as reminders_router
 from lugnut.settings import Settings
 from lugnut.settings_api import router as settings_router
 from lugnut.vehicles.routes import router as vehicles_router
@@ -38,6 +39,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(records_router)
     app.include_router(job_types_router)
     app.include_router(attachments_router)
+    app.include_router(reminders_router)
 
     @app.get("/api/health")
     def health() -> dict[str, str]:
