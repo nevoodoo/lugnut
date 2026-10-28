@@ -26,3 +26,8 @@ def logged_in(client):
 def db_session(client):
     with Session(client.app.state.engine) as s:
         yield s
+
+
+@pytest.fixture
+def vehicle(client, logged_in):
+    return client.post("/api/vehicles", json={"name": "Daily"}, headers=CSRF).json()["id"]

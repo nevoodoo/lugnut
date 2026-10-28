@@ -56,6 +56,8 @@ def list_reminders(
     q = select(Reminder)
     if vehicle_id is not None:
         q = q.where(Reminder.vehicle_id == vehicle_id)
+    else:  # archived vehicles stay out of the cross-vehicle list
+        q = q.where(Reminder.vehicle_id.in_(select(Vehicle.id).where(Vehicle.archived.is_(False))))
     if not include_completed:
         q = q.where(Reminder.completed_at.is_(None))
     install = get_install_settings(db)

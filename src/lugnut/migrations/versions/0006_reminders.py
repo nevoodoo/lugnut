@@ -27,7 +27,7 @@ def upgrade() -> None:
         sa.Column("warn_km", sa.Float, nullable=False, server_default="1000"),
         sa.Column("kind", sa.String, nullable=False, server_default="manual"),
         sa.Column("expiry_type", sa.String),
-        sa.Column("source_record_id", sa.Integer, sa.ForeignKey("record.id", ondelete="CASCADE")),
+        sa.Column("source_record_id", sa.Integer, sa.ForeignKey("record.id", ondelete="SET NULL")),
         sa.Column("notified_state", sa.String),
         sa.Column("completed_at", sa.DateTime),
         sa.Column("created_at", sa.DateTime, nullable=False),

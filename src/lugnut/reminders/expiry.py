@@ -39,6 +39,7 @@ def sync_expiry(db: Session, vehicle_id: int, expiry_type: str) -> None:
         rem = Reminder(
             vehicle_id=vehicle_id,
             kind="expiry",
+            title=f"{region.get('labels', {}).get(expiry_type, expiry_type.capitalize())} expires",
             expiry_type=expiry_type,
             warn_days=region.get("expiry_reminder_days", {}).get(expiry_type, 30),
             created_at=utcnow(),
@@ -46,6 +47,6 @@ def sync_expiry(db: Session, vehicle_id: int, expiry_type: str) -> None:
         db.add(rem)
     if rem.due_date != due:
         rem.notified_state = None
+        rem.completed_at = None  # a renewal reopens a completed reminder
     rem.due_date = due
     rem.source_record_id = latest.id
-    rem.title = f"{region.get('labels', {}).get(expiry_type, expiry_type.capitalize())} expires"

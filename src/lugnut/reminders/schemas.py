@@ -1,7 +1,7 @@
 import datetime as dt
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from lugnut.reminders.models import Reminder
 from lugnut.reminders.state import State, due_state, today
@@ -23,6 +23,7 @@ SERVER_FIELDS = {
     "created_at",
 }
 KM_FIELDS = ("due_km", "repeat_km", "warn_km")
+DEFAULT_WARN_KM = 1000.0  # stored in km, whatever the vehicle's unit
 EXPIRY_EDITABLE = {"title", "notes", "warn_days"}
 
 
@@ -30,11 +31,10 @@ class ReminderFields(BaseModel):
     title: str = Field(min_length=1)
     notes: str | None = None
     due_date: dt.date | None = None
-    due_km: float | None = Field(None, ge=0, validate_default=True)  # vehicle's unit
+    due_km: float | None = Field(None, ge=0)  # vehicle's unit
     repeat_months: int | None = Field(None, ge=1)
     repeat_km: float | None = Field(None, gt=0)  # vehicle's unit
     warn_days: int = Field(30, ge=0)
-    warn_km: float = Field(1000, ge=0)  # vehicle's unit
 
 
 class ReminderIn(ReminderFields):
@@ -48,15 +48,17 @@ class ReminderIn(ReminderFields):
             return {k: v for k, v in data.items() if k not in SERVER_FIELDS}
         return data
 
-    @field_validator("due_km")
-    @classmethod
-    def _due_required(cls, v: float | None, info: ValidationInfo) -> float | None:
-        if v is None and info.data.get("due_date") is None:
+    warn_km: float | None = Field(None, ge=0)  # vehicle's unit; omitted means the km default
+
+    @model_validator(mode="after")
+    def _due_required(self) -> "ReminderIn":
+        if self.due_km is None and self.due_date is None:
             raise ValueError("due_date or due_km is required")
-        return v
+        return self
 
 
 class ReminderOut(ReminderFields):
+    warn_km: float  # vehicle's unit
     id: int
     vehicle_id: int
     distance_unit_effective: DistanceUnit
@@ -81,6 +83,8 @@ def to_row_values(body: ReminderIn, unit: DistanceUnit) -> dict[str, Any]:
     for k in KM_FIELDS:
         if values[k] is not None:
             values[k] = km_from(values[k], unit)
+    if values["warn_km"] is None:
+        values["warn_km"] = DEFAULT_WARN_KM
     return values
 
 

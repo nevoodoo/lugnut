@@ -30,7 +30,7 @@ class Reminder(Base):
     kind: Mapped[str] = mapped_column(default="manual")
     expiry_type: Mapped[str | None]
     source_record_id: Mapped[int | None] = mapped_column(
-        ForeignKey("record.id", ondelete="CASCADE")
+        ForeignKey("record.id", ondelete="SET NULL")
     )
     notified_state: Mapped[str | None]
     completed_at: Mapped[dt.datetime | None]
