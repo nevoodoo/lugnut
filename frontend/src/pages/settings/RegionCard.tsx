@@ -17,7 +17,7 @@ type Draft = Omit<SettingsData, "discord_webhook_set"> & { discord_webhook_set?:
 
 const DATE_FORMATS = ["DD/MM/YYYY", "MM/DD/YYYY", "YYYY-MM-DD"];
 
-const ZONES = (() => {
+export const ZONES = (() => {
   try {
     return Intl.supportedValuesOf("timeZone");
   } catch {
@@ -26,7 +26,7 @@ const ZONES = (() => {
 })();
 
 // "Melbourne" or "new york" -> the one zone it names, else undefined.
-function resolveZone(text: string, zones: string[]): string | undefined {
+export function resolveZone(text: string, zones: string[]): string | undefined {
   const t = text.trim().toLowerCase().replace(/ /g, "_");
   const exact = zones.find((z) => z.toLowerCase() === t);
   if (exact) return exact;

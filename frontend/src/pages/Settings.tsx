@@ -1,3 +1,5 @@
+import { Link } from "react-router";
+import { Card } from "../components/Card";
 import { useSettings } from "../api/hooks";
 import { AccountCard } from "./settings/AccountCard";
 import { DiscordCard } from "./settings/DiscordCard";
@@ -14,6 +16,11 @@ export function Settings() {
       <RegionCard settings={settings.data} />
       <DiscordCard isSet={settings.data.discord_webhook_set} />
       <TokensCard s={settings.data} />
+      <Card label="Import">
+        <p>
+          Moving from LubeLogger? <Link to="/settings/import">Import from LubeLogger</Link>
+        </p>
+      </Card>
       <AccountCard />
     </div>
   );

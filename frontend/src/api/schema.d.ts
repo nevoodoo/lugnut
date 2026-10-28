@@ -426,6 +426,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/import/lubelogger": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Upload Backup */
+        post: operations["upload_backup_api_import_lubelogger_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/import/lubelogger/{token}/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Preview Backup */
+        post: operations["preview_backup_api_import_lubelogger__token__preview_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/import/lubelogger/{token}/commit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Commit Backup */
+        post: operations["commit_backup_api_import_lubelogger__token__commit_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/health": {
         parameters: {
             query?: never;
@@ -484,6 +535,11 @@ export interface components {
             /** Record Id */
             record_id?: number | null;
         };
+        /** Body_upload_backup_api_import_lubelogger_post */
+        Body_upload_backup_api_import_lubelogger_post: {
+            /** File */
+            file: string;
+        };
         /** CompleteIn */
         CompleteIn: {
             /** Date */
@@ -500,6 +556,27 @@ export interface components {
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /** ImportOptions */
+        ImportOptions: {
+            /** Date Order */
+            date_order?: ("DMY" | "MDY" | "YMD") | null;
+            /** Source Timezone */
+            source_timezone?: string | null;
+            /**
+             * Tax Types
+             * @default {}
+             */
+            tax_types: {
+                [key: string]: "registration" | "insurance";
+            };
+            /**
+             * Vehicle Map
+             * @default {}
+             */
+            vehicle_map: {
+                [key: string]: number | "new";
+            };
         };
         /** JobTypeIn */
         JobTypeIn: {
@@ -2025,6 +2102,115 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ReminderOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    upload_backup_api_import_lubelogger_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_backup_api_import_lubelogger_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    preview_backup_api_import_lubelogger__token__preview_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ImportOptions"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    commit_backup_api_import_lubelogger__token__commit_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ImportOptions"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
             /** @description Validation Error */

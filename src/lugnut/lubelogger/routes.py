@@ -265,6 +265,7 @@ class _Commit:
         self.created = dict.fromkeys(("vehicles", "records", "reminders", "attachments"), 0)
         self.existing = dict.fromkeys(("vehicles", "records", "reminders"), 0)
         self.warnings = list(plan.warnings)
+        self.vehicles: list[dict[str, Any]] = []
 
     def warn(self, msg: str) -> None:
         if msg not in self.warnings:
@@ -320,6 +321,7 @@ class _Commit:
                         v.photo_attachment_id = photo.id
                     elif photo is not None:
                         self.warn(f"{pv.vehicle['name']}: photo is not an image; kept as a file")
+            self.vehicles.append({"id": v.id, "name": v.name})
             unit = pv.vehicle["distance_unit"]  # the plan's distances are in this unit
             # LubeLogger ids restart in every install, so "already imported" is per vehicle
             seen_records = set(
@@ -368,6 +370,7 @@ class _Commit:
                 self.created["reminders"] += 1
         return {
             "created": self.created,
+            "vehicles": self.vehicles,
             "skipped_existing": self.existing,
             "warnings": self.warnings,
         }
