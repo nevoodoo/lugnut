@@ -178,12 +178,35 @@ function every(j: InsightsData["repeat_jobs"][number], unit: "km" | "mi"): strin
   return parts.length ? `every ${parts.join(" or ")}` : "";
 }
 
+function nextText(j: InsightsData["repeat_jobs"][number], s: Dates, unit: "km" | "mi"): string {
+  const parts = [j.next_date && formatDate(j.next_date, s), j.next_odometer !== null && formatDistance(Math.round(j.next_odometer), unit)];
+  return parts.filter(Boolean).join(" or ") || "Not enough history";
+}
+
 function Repeats({ d, m, s }: { d: InsightsData; m: Money; s: Dates }) {
   if (d.repeat_jobs.length === 0) return null;
   const unit = d.distance_unit;
   return (
     <Card label="Repeat jobs">
-      <div className="table-wrap">
+      <ul className="ins-jobs rows">
+        {d.repeat_jobs.map((j) => (
+          <li key={j.name}>
+            <div className="ins-job-head">
+              <strong>{j.name}</strong>
+              <span className="mono">{j.count}&times;</span>
+            </div>
+            <dl>
+              <dt>Typical interval</dt>
+              <dd>{every(j, unit) || "Not enough history"}</dd>
+              <dt>Typical cost</dt>
+              <dd className="mono">{j.avg_cost !== null ? formatMoney(j.avg_cost, m) : "Not enough history"}</dd>
+              <dt>Next expected</dt>
+              <dd className="mono">{nextText(j, s, unit)}</dd>
+            </dl>
+          </li>
+        ))}
+      </ul>
+      <div className="table-wrap ins-wide-table">
         <table className="ins-table">
           <thead>
             <tr>
@@ -196,16 +219,14 @@ function Repeats({ d, m, s }: { d: InsightsData; m: Money; s: Dates }) {
           </thead>
           <tbody>
             {d.repeat_jobs.map((j) => {
-              const next = [j.next_date && formatDate(j.next_date, s), j.next_odometer !== null && formatDistance(Math.round(j.next_odometer), unit)]
-                .filter(Boolean)
-                .join(" or ");
+              const next = nextText(j, s, unit);
               return (
                 <tr key={j.name}>
                   <th scope="row">{j.name}</th>
                   <td className="mono">{j.count}&times;</td>
                   <td>{every(j, unit) || "Not enough history"}</td>
                   <td className="mono">{j.avg_cost !== null ? formatMoney(j.avg_cost, m) : ""}</td>
-                  <td className="mono">{next || "Not enough history"}</td>
+                  <td className="mono">{next}</td>
                 </tr>
               );
             })}
