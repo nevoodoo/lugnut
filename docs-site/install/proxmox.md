@@ -6,7 +6,7 @@ A script on the Proxmox VE host creates an unprivileged LXC container with Debia
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/nevoodoo/lugnut/main/deploy/proxmox/lugnut.sh)"
 ```
 
-It asks for each setting and shows a default in brackets. Press Enter to accept it. When it finishes it prints the address, `http://<container IP>:8080`. Open it and create your account.
+It asks for each setting and shows a default in brackets. Press Enter to accept it. When it finishes it prints the address, for example `http://<container IP>:8080`. Open it and create your account.
 
 There's no stable release yet. Until there is, pin a release candidate with `LUGNUT_VERSION` (see below).
 
@@ -31,6 +31,7 @@ LUGNUT_CTID=120 LUGNUT_DISK=8 LUGNUT_VERSION=0.1.0rc1 \
 | `LUGNUT_CORES` | `1` | CPU cores |
 | `LUGNUT_RAM` | `512` | Memory in MB |
 | `LUGNUT_DISK` | `4` | Disk size in GB |
+| `LUGNUT_PORT` | `8080` | Port Lugnut listens on. Use `80` to open it without a port number |
 | `LUGNUT_YES` | `0` | Set to `1` to skip all prompts |
 | `LUGNUT_VERSION` | latest stable | Install this version, for example `0.1.0rc1` |
 | `LUGNUT_SOURCE` | none | A wheel URL, or a wheel path on the Proxmox host, to install instead of a release |
@@ -74,3 +75,7 @@ Stop and destroy the container from the host. This deletes its data:
 pct stop 120
 pct destroy 120
 ```
+
+## Changing the port
+
+To move an existing install to another port, such as 80, edit `LUGNUT_PORT` in `/etc/lugnut.env` inside the container, then run `systemctl restart lugnut`. The service is allowed to use ports below 1024 without running as root.

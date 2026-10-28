@@ -17,6 +17,8 @@ ENV_FILE=/etc/lugnut.env
 VERSION="${LUGNUT_VERSION:-}"
 SOURCE="${LUGNUT_SOURCE:-}"
 NO_SYSTEMD="${LUGNUT_NO_SYSTEMD:-0}"
+PORT="${LUGNUT_PORT:-8080}"
+[[ "$PORT" =~ ^[0-9]+$ ]] || { printf 'error: LUGNUT_PORT must be a number\n' >&2; exit 1; }
 
 log() { printf '==> %s\n' "$*"; }
 die() { printf 'error: %s\n' "$*" >&2; exit 1; }
@@ -74,11 +76,11 @@ write_env_file() {
     return
   fi
   log "Writing $ENV_FILE"
-  cat >"$ENV_FILE" <<'ENVEOF'
+  cat >"$ENV_FILE" <<ENVEOF
 # Lugnut settings. Restart after editing: systemctl restart lugnut
 LUGNUT_DATA_DIR=/opt/lugnut/data
 LUGNUT_HOST=0.0.0.0
-LUGNUT_PORT=8080
+LUGNUT_PORT=$PORT
 # The session cookie is Secure by default, and browsers drop it over plain HTTP
 # on a LAN address, which breaks login. Set this to true if you put Lugnut
 # behind an HTTPS reverse proxy.
@@ -99,6 +101,9 @@ Group=lugnut
 EnvironmentFile=/etc/lugnut.env
 ExecStart=/usr/local/bin/lugnut serve
 Restart=on-failure
+# Lets the service listen on ports below 1024, such as 80, without running as root.
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE
 NoNewPrivileges=true
 ProtectSystem=strict
 ReadWritePaths=/opt/lugnut

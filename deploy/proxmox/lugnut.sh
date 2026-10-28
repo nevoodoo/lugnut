@@ -8,7 +8,7 @@
 #
 # Every prompt can be preset with an environment variable:
 #   LUGNUT_CTID, LUGNUT_HOSTNAME, LUGNUT_TEMPLATE_STORAGE, LUGNUT_STORAGE,
-#   LUGNUT_BRIDGE, LUGNUT_IP, LUGNUT_GATEWAY, LUGNUT_CORES, LUGNUT_RAM, LUGNUT_DISK
+#   LUGNUT_BRIDGE, LUGNUT_IP, LUGNUT_GATEWAY, LUGNUT_CORES, LUGNUT_RAM, LUGNUT_DISK, LUGNUT_PORT
 # Other variables:
 #   LUGNUT_YES=1          same as -y
 #   LUGNUT_VERSION        pin a release, for example 0.1.0rc1 (default: latest stable)
@@ -17,7 +17,6 @@
 set -euo pipefail
 
 DEFAULT_INSTALL_URL=https://raw.githubusercontent.com/nevoodoo/lugnut/main/deploy/proxmox/lugnut-install.sh
-PORT=8080
 ASSUME_YES="${LUGNUT_YES:-0}"
 WORKDIR=""
 
@@ -132,7 +131,7 @@ push_source() {
 run_in_container() {
   local ctid="$1" script="$2" source
   source="$(push_source "$ctid")"
-  pct exec "$ctid" -- env "LUGNUT_VERSION=${LUGNUT_VERSION:-}" "LUGNUT_SOURCE=$source" "$script"
+  pct exec "$ctid" -- env "LUGNUT_VERSION=${LUGNUT_VERSION:-}" "LUGNUT_SOURCE=$source" "LUGNUT_PORT=${PORT:-8080}" "$script"
 }
 
 create_container() {
@@ -170,6 +169,8 @@ install() {
   cores="$(ask "${LUGNUT_CORES:-}" "CPU cores" 1)"
   ram="$(ask "${LUGNUT_RAM:-}" "RAM in MB" 512)"
   disk="$(ask "${LUGNUT_DISK:-}" "Disk in GB" 4)"
+  PORT="$(ask "${LUGNUT_PORT:-}" "Port Lugnut listens on" 8080)"
+  [[ "$PORT" =~ ^[0-9]+$ ]] || die "port must be a number"
 
   [[ "$ctid" =~ ^[0-9]+$ ]] || die "container ID must be a number"
   if pct status "$ctid" >/dev/null 2>&1; then
@@ -177,8 +178,8 @@ install() {
   fi
 
   if [[ "$ASSUME_YES" != 1 ]]; then
-    printf '\nAbout to create container %s (%s): %s cores, %s MB RAM, %s GB disk on %s, network %s.\n' \
-      "$ctid" "$hostname" "$cores" "$ram" "$disk" "$rstorage" "$ip" >&2
+    printf '\nAbout to create container %s (%s): %s cores, %s MB RAM, %s GB disk on %s, network %s, port %s.\n' \
+      "$ctid" "$hostname" "$cores" "$ram" "$disk" "$rstorage" "$ip" "$PORT" >&2
     local ok
     read -r -p "Continue? [Y/n]: " ok || ok=""
     [[ -z "$ok" || "$ok" =~ ^[Yy] ]] || die "cancelled"
