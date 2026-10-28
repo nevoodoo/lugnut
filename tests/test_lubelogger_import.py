@@ -101,6 +101,18 @@ def test_second_import_adds_nothing(client):
     tok = upload(client, demo_with_plate(b"OTHERCAR")).json()["token"]
     res = client.post(f"/api/import/lubelogger/{tok}/commit", json={}, headers=CSRF).json()
     assert res["created"]["vehicles"] == 1 and res["created"]["records"] == 291
+    # the same backup mapped by hand onto the first vehicle adds nothing
+    first = client.get("/api/vehicles").json()[0]["id"]
+    tok = upload(client, demo_with_plate(b"THIRDCAR")).json()["token"]
+    body = {"vehicle_map": {"vehicles:1": first}}
+    pv = client.post(f"/api/import/lubelogger/{tok}/preview", json=body, headers=CSRF).json()
+    assert pv["summary"][0]["matched_vehicle_id"] == first
+    res = client.post(f"/api/import/lubelogger/{tok}/commit", json=body, headers=CSRF).json()
+    assert sum(res["created"].values()) == 0
+    bad = {"vehicle_map": {"vehicles:1": 9999}}
+    tok = upload(client, demo_with_plate(b"THIRDCAR")).json()["token"]
+    res = client.post(f"/api/import/lubelogger/{tok}/preview", json=bad, headers=CSRF)
+    assert res.status_code == 422 and "vehicle_map" in res.json()["detail"][0]["loc"]
 
 
 def test_malicious_zip_rejected(client, data_dir):

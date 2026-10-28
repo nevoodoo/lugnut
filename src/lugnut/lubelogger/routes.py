@@ -52,6 +52,8 @@ class ImportOptions(BaseModel):
     date_order: Literal["DMY", "MDY", "YMD"] | None = None
     source_timezone: str | None = None
     tax_types: dict[str, Literal["registration", "insurance"]] = {}
+    # source vehicle source_id -> a Lugnut vehicle id to import into, or "new"
+    vehicle_map: dict[str, int | Literal["new"]] = {}
 
     @field_validator("source_timezone")
     @classmethod
@@ -110,18 +112,70 @@ def _load_plan(d: str, opts: ImportOptions) -> ImportPlan:
             raise _bad_file("config/userConfig.json is not valid JSON") from None
         if not isinstance(config, dict):
             raise _bad_file("config/userConfig.json is not a JSON object")
-    return build_plan(cols, config, opts.model_dump(exclude_none=True))
+    return build_plan(cols, config, opts.model_dump(exclude_none=True, exclude={"vehicle_map"}))
 
 
-def _preview(token: str, plan: ImportPlan) -> dict[str, Any]:
-    summary = [
-        {
-            "source_id": pv.source_id,
-            "name": pv.vehicle["name"],
-            "counts": {**Counter(r["type"] for r in pv.records), "reminders": len(pv.reminders)},
-        }
-        for pv in plan.vehicles
-    ]
+def _check_map(db: Session, opts: ImportOptions) -> None:
+    for key, vid in opts.vehicle_map.items():
+        if vid != "new" and db.get(Vehicle, vid) is None:
+            raise RequestValidationError(
+                [
+                    {
+                        "type": "value_error",
+                        "loc": ("body", "vehicle_map", key),
+                        "msg": "No such vehicle",
+                        "input": vid,
+                    }
+                ]
+            )
+
+
+def _norm(v: Any) -> str:
+    return "".join(str(v or "").split()).upper()
+
+
+def match_vehicle(
+    db: Session, pv: Any, vehicle_map: dict[str, int | Literal["new"]]
+) -> Vehicle | None:
+    """The Lugnut vehicle this source vehicle goes into, or None to add it as new.
+
+    A hand-picked mapping wins. Otherwise a vehicle imported earlier with this source_id that is
+    the same car: source_id alone isn't enough (ids restart at 1 in every LubeLogger install), so
+    the plate or VIN must match; with neither on both sides, source_id decides."""
+    chosen = vehicle_map.get(pv.source_id)
+    if chosen == "new":
+        return None
+    if chosen is not None:
+        return db.get(Vehicle, chosen)
+    rows = db.scalars(
+        select(Vehicle).where(Vehicle.source == SOURCE, Vehicle.source_id == pv.source_id)
+    )
+    for v in rows:
+        pairs = [(_norm(getattr(v, k)), _norm(pv.vehicle.get(k))) for k in ("plate", "vin")]
+        compared = [a == b for a, b in pairs if a and b]
+        if not compared or any(compared):
+            return v
+    return None
+
+
+def _preview(
+    db: Session, token: str, plan: ImportPlan, vehicle_map: dict[str, int | Literal["new"]]
+) -> dict[str, Any]:
+    summary = []
+    for pv in plan.vehicles:
+        match = match_vehicle(db, pv, vehicle_map)
+        summary.append(
+            {
+                "source_id": pv.source_id,
+                "name": pv.vehicle["name"],
+                "plate": pv.vehicle.get("plate"),
+                "matched_vehicle_id": match.id if match else None,
+                "counts": {
+                    **Counter(r["type"] for r in pv.records),
+                    "reminders": len(pv.reminders),
+                },
+            }
+        )
     return {
         "token": token,
         "summary": summary,
@@ -134,7 +188,7 @@ def _preview(token: str, plan: ImportPlan) -> dict[str, Any]:
 
 
 @router.post("")
-def upload_backup(file: UploadFile, request: Request, _: Writer) -> dict[str, Any]:
+def upload_backup(file: UploadFile, request: Request, _: Writer, db: DB) -> dict[str, Any]:
     settings: Settings = request.app.state.settings
     sweep_imports(settings)
     settings.imports_dir.mkdir(parents=True, exist_ok=True)
@@ -152,13 +206,16 @@ def upload_backup(file: UploadFile, request: Request, _: Writer) -> dict[str, An
     except BaseException:
         shutil.rmtree(d, ignore_errors=True)
         raise
-    return _preview(token, plan)
+    return _preview(db, token, plan, {})
 
 
 @router.post("/{token}/preview")
-def preview_backup(token: str, body: ImportOptions, request: Request, _: Writer) -> dict[str, Any]:
+def preview_backup(
+    token: str, body: ImportOptions, request: Request, _: Writer, db: DB
+) -> dict[str, Any]:
     d = _import_dir(request.app.state.settings, token)
-    return _preview(token, _load_plan(d, body))
+    _check_map(db, body)
+    return _preview(db, token, _load_plan(d, body), body.vehicle_map)
 
 
 @router.post("/{token}/commit")
@@ -167,6 +224,7 @@ def commit_backup(
 ) -> dict[str, Any]:
     settings: Settings = request.app.state.settings
     d = _import_dir(settings, token)
+    _check_map(db, body)
     work = d + ".committing"
     try:
         os.rename(d, work)  # claims the upload, so a second commit of it gets a 409
@@ -175,7 +233,7 @@ def commit_backup(
     staged: list[str] = []  # files copied into storage, removed again if the commit fails
     try:
         plan = _load_plan(work, body)
-        result = _Commit(db, settings, work, plan, staged).run()
+        result = _Commit(db, settings, work, plan, staged, body.vehicle_map).run()
         db.commit()
     except BaseException:
         db.rollback()
@@ -186,17 +244,20 @@ def commit_backup(
     return result
 
 
-def _norm(v: Any) -> str:
-    return "".join(str(v or "").split()).upper()
-
-
 class _Commit:
     """Writes a plan through the normal create helpers. Adds only what is new; never updates."""
 
     def __init__(
-        self, db: Session, settings: Settings, d: str, plan: ImportPlan, staged: list[str]
+        self,
+        db: Session,
+        settings: Settings,
+        d: str,
+        plan: ImportPlan,
+        staged: list[str],
+        vehicle_map: dict[str, int | Literal["new"]],
     ) -> None:
         self.db, self.settings, self.plan, self.staged = db, settings, plan, staged
+        self.vehicle_map = vehicle_map
         self.base = d + os.sep
         self.install = get_install_settings(db)
         # Fuel volumes in the plan are in the source's unit; the record helper converts from it.
@@ -236,25 +297,10 @@ class _Commit:
         self.created["attachments"] += 1
         return a
 
-    def match_vehicle(self, source_id: str, planned: dict[str, Any]) -> Vehicle | None:
-        """A vehicle imported earlier with this source_id that is the same car.
-
-        source_id alone isn't enough: ids restart at 1 in every LubeLogger install. The car is the
-        same when the plate or VIN matches; with neither on both sides, source_id decides."""
-        rows = self.db.scalars(
-            select(Vehicle).where(Vehicle.source == SOURCE, Vehicle.source_id == source_id)
-        )
-        for v in rows:
-            pairs = [(_norm(getattr(v, k)), _norm(planned.get(k))) for k in ("plate", "vin")]
-            compared = [a == b for a, b in pairs if a and b]
-            if not compared or any(compared):
-                return v
-        return None
-
     def run(self) -> dict[str, Any]:
         db = self.db
         for pv in self.plan.vehicles:
-            v = self.match_vehicle(pv.source_id, pv.vehicle)
+            v = match_vehicle(db, pv, self.vehicle_map)
             if v is not None:
                 self.existing["vehicles"] += 1
             else:
