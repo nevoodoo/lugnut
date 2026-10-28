@@ -73,3 +73,8 @@ export const lineItemsTotal = (items: { cost: number | null; quantity: number | 
 // Fuel economy is shown to one decimal place.
 export const formatEconomy = (value: number | null, unit: string): string =>
   value === null ? "" : `${value.toFixed(1)} ${unit}`;
+
+// Money per distance unit, rounded to whole minor units; empty when there is no figure.
+export function perDistance(v: number | null, m: Pick<InstallSettings, "currency">, unit: string): string {
+  return v === null ? "" : `${formatMoney(Math.round(v), m)}/${unit}`;
+}

@@ -1423,3 +1423,8 @@ a.rec:hover .rec-title {
     display: block;
   }
 }
+.row .ins-change {
+  display: inline-flex;
+  margin: 0 0 0 0.5rem;
+  vertical-align: middle;
+}

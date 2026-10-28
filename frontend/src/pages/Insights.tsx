@@ -6,17 +6,13 @@ import { useInsights, useSettings, useVehicle, type Insights as InsightsData } f
 import { BarChart } from "../components/BarChart";
 import { Card } from "../components/Card";
 import { EconomyChart } from "../components/EconomyChart";
-import { formatDate, formatDistance, formatEconomy, formatMoney, type InstallSettings } from "../lib/format";
+import { formatDate, formatDistance, formatEconomy, formatMoney, perDistance, type InstallSettings } from "../lib/format";
 
 type Summary = InsightsData["this_year"];
 type Money = Pick<InstallSettings, "currency">;
 type Dates = Pick<InstallSettings, "date_format">;
 
 const cap = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
-
-function perDistance(v: number | null, m: Money, unit: string): string {
-  return v === null ? "" : `${formatMoney(Math.round(v), m)}/${unit}`;
-}
 
 function Muted({ children }: { children: ReactNode }) {
   return <p className="muted ins-note">{children}</p>;

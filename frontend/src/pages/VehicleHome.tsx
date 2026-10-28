@@ -1,7 +1,7 @@
-import { FileText, Fuel, Gauge, Pencil, Receipt } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, FileText, Fuel, Gauge, Pencil, Receipt } from "lucide-react";
 import { useEffect } from "react";
 import { Link, Navigate, useParams } from "react-router";
-import { useReminders, useRecords, useSettings, useVehicle } from "../api/hooks";
+import { useInsights, useReminders, useRecords, useSettings, useVehicle } from "../api/hooks";
 import { ApiError } from "../api/client";
 import { Card } from "../components/Card";
 import { OdometerBlock } from "../components/OdometerBlock";
@@ -10,7 +10,7 @@ import { PhotoUpload } from "../components/PhotoUpload";
 import { PlateBadge } from "../components/PlateBadge";
 import { RecordRows } from "../components/RecordRows";
 import { ReminderRow } from "../components/ReminderRow";
-import { formatDate, type InstallSettings } from "../lib/format";
+import { formatDate, formatEconomy, perDistance, type InstallSettings } from "../lib/format";
 import { setLastVehicle } from "../lib/lastVehicle";
 
 function Due({ vehicleId, s }: { vehicleId: number; s: InstallSettings }) {
@@ -24,6 +24,44 @@ function Due({ vehicleId, s }: { vehicleId: number; s: InstallSettings }) {
         ))}
       </ul>
       <Link className="link-tap" to={`/vehicles/${vehicleId}/reminders/new`}>Add a reminder</Link>
+    </Card>
+  );
+}
+
+function Stats({ vehicleId }: { vehicleId: number }) {
+  const { data: d } = useInsights(vehicleId);
+  if (!d) return null;
+  const m = { currency: d.currency };
+  const pct = d.economy.change_pct;
+  const good = pct !== null && pct !== 0 && (pct < 0) === d.lower_is_better;
+  const Arrow = pct !== null && pct < 0 ? ArrowDownRight : ArrowUpRight;
+  const na = (t: string) => t || "n/a";
+  return (
+    <Card label="Stats">
+      <ul className="rows">
+        <li className="row">
+          <span>Fuel average</span>
+          <span className="mono">
+            {na(formatEconomy(d.economy.average, d.economy_unit))}
+            {pct !== null && (
+              <span className={`ins-change${pct === 0 ? "" : good ? " good" : " bad"}`}>
+                <Arrow size={16} aria-hidden="true" />
+                {pct > 0 ? "+" : ""}
+                {pct.toFixed(1)}%
+              </span>
+            )}
+          </span>
+        </li>
+        <li className="row">
+          <span>Cost this year</span>
+          <span className="mono">{na(perDistance(d.this_year.per_distance, m, d.distance_unit))}</span>
+        </li>
+        <li className="row">
+          <span>Cost since purchase</span>
+          <span className="mono">{na(perDistance(d.all_time.per_distance, m, d.distance_unit))}</span>
+        </li>
+      </ul>
+      <Link className="link-tap" to={`/vehicles/${vehicleId}/insights`}>See insights</Link>
     </Card>
   );
 }
@@ -112,6 +150,7 @@ export function VehicleHome() {
       </div>
       <div className="vh-cards">
         <Due vehicleId={id} s={s} />
+        <Stats vehicleId={id} />
         <Recent vehicleId={id} unit={unit} />
         <Empty vehicleId={id} />
       </div>
