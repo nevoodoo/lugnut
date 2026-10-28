@@ -44,7 +44,7 @@ def test_oversized_and_wrong_type_rejected(client, vehicle):
 def test_deleting_vehicle_removes_records_and_files(client, vehicle, data_dir):
     # catches: orphaned rows or files left on disk
     rec = post_record(client, vehicle, MINIMAL_WORK)
-    upload(client, vehicle, body=PNG_BYTES, record_id=rec["id"])
+    assert upload(client, vehicle, body=PNG_BYTES, record_id=rec["id"]).status_code == 201
     client.delete(f"/api/vehicles/{vehicle}", headers=CSRF)
     assert not any((data_dir / "attachments").iterdir())
     assert client.get(f"/api/records/{rec['id']}").status_code == 404

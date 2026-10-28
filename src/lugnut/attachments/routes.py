@@ -1,3 +1,4 @@
+import os
 from pathlib import PurePath
 from typing import Annotated
 
@@ -90,6 +91,8 @@ def download_attachment(attachment_id: int, request: Request, _: Reader, db: DB)
         full = storage.path(request.app.state.settings, a.stored_name)
     except ValueError:
         raise HTTPException(404, "File missing") from None
+    if not os.path.isfile(full):
+        raise HTTPException(404, "File missing")
     return FileResponse(
         full,
         media_type=a.content_type,

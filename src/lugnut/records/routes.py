@@ -119,6 +119,7 @@ def replace_record(record_id: int, body: RecordIn, _: Writer, db: DB) -> RecordO
 @router.delete("/records/{record_id}", status_code=204)
 def delete_record(record_id: int, request: Request, _: Writer, db: DB) -> None:
     r = _get(db, record_id)
+    # ponytail: an upload landing between select and delete is orphaned on disk; sweep if it matters
     names = list(db.scalars(select(Attachment.stored_name).where(Attachment.record_id == r.id)))
     db.delete(r)
     db.commit()

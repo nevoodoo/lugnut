@@ -54,6 +54,7 @@ def replace_vehicle(vehicle_id: int, body: VehicleIn, _: Writer, db: DB) -> Vehi
 @router.delete("/{vehicle_id}", status_code=204)
 def delete_vehicle(vehicle_id: int, request: Request, _: Writer, db: DB) -> None:
     v = _get(db, vehicle_id)
+    # ponytail: an upload landing between select and delete is orphaned on disk; sweep if it matters
     names = list(db.scalars(select(Attachment.stored_name).where(Attachment.vehicle_id == v.id)))
     db.delete(v)
     db.commit()

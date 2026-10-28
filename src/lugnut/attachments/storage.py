@@ -23,7 +23,7 @@ def sniff(head: bytes) -> tuple[str, str] | None:
         return "image/png", "png"
     if head[:4] == b"RIFF" and head[8:12] == b"WEBP":
         return "image/webp", "webp"
-    if head[4:12] in (b"ftypheic", b"ftypheix", b"ftypmif1"):
+    if head[4:12] in (b"ftypheic", b"ftypheix"):
         return "image/heic", "heic"
     if head.startswith(b"%PDF-"):
         return "application/pdf", "pdf"
