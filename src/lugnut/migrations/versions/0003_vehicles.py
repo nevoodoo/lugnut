@@ -25,7 +25,7 @@ def upgrade() -> None:
         sa.Column("purchase_price", sa.Integer),
         sa.Column("sold_date", sa.Date),
         sa.Column("sold_price", sa.Integer),
-        sa.Column("odometer_adjustment_km", sa.Integer, nullable=False, server_default="0"),
+        sa.Column("odometer_adjustment_km", sa.Float, nullable=False, server_default="0"),
         sa.Column("photo_attachment_id", sa.Integer),
         sa.Column("custom_fields", sa.JSON, nullable=False, server_default="{}"),
         sa.Column("archived", sa.Boolean, nullable=False, server_default=sa.false()),

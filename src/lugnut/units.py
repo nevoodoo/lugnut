@@ -7,11 +7,11 @@ KM_PER_MI = 1.609344
 L_PER_GAL = {"L": 1.0, "gal_us": 3.785411784, "gal_imp": 4.54609}
 
 
-def km_from(value: float, unit: DistanceUnit) -> int:
-    return round(value * (KM_PER_MI if unit == "mi" else 1))
+def km_from(value: float, unit: DistanceUnit) -> float:
+    return value * (KM_PER_MI if unit == "mi" else 1)
 
 
-def km_to(km: int, unit: DistanceUnit) -> float:
+def km_to(km: float, unit: DistanceUnit) -> float:
     return round(km / (KM_PER_MI if unit == "mi" else 1), 1)
 
 

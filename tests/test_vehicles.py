@@ -1,3 +1,4 @@
+import pytest
 from conftest import CSRF
 from sqlalchemy import text
 
@@ -47,4 +48,10 @@ def test_miles_vehicle_stores_km_and_survives_region_switch(client, logged_in):
     ).json()
     client.put("/api/settings", json={"region": "gb"}, headers=CSRF)
     assert client.get(f"/api/vehicles/{v['id']}").json()["odometer_adjustment"] == 100
-    assert stored_adjustment_km(client, v["id"]) == 161
+    assert stored_adjustment_km(client, v["id"]) == pytest.approx(160.9344)
+    r = client.post(
+        f"/api/vehicles/{v['id']}/records",
+        json={"type": "odometer", "date": "2026-10-01", "odometer": 100000},
+        headers=CSRF,
+    ).json()
+    assert client.get(f"/api/records/{r['id']}").json()["odometer"] == 100000.0

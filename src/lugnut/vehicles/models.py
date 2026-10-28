@@ -23,7 +23,7 @@ class Vehicle(Base):
     purchase_price: Mapped[int | None]
     sold_date: Mapped[date | None]
     sold_price: Mapped[int | None]
-    odometer_adjustment_km: Mapped[int] = mapped_column(default=0)
+    odometer_adjustment_km: Mapped[float] = mapped_column(default=0)
     photo_attachment_id: Mapped[int | None]  # FK added in the attachments migration
     custom_fields: Mapped[dict[str, str]] = mapped_column(JSON, default=dict)
     archived: Mapped[bool] = mapped_column(default=False)

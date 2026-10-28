@@ -48,7 +48,7 @@ def upgrade() -> None:
         ),
         sa.Column("type", sa.String, nullable=False),
         sa.Column("date", sa.Date),
-        sa.Column("odometer_km", sa.Integer),
+        sa.Column("odometer_km", sa.Float),
         sa.Column("cost", sa.Integer),
         sa.Column("is_estimate", sa.Boolean, nullable=False, server_default=sa.false()),
         sa.Column("title", sa.String),

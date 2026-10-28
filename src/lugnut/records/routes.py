@@ -2,6 +2,7 @@ import datetime as dt
 from typing import Annotated
 
 from fastapi import APIRouter, HTTPException, Query
+from fastapi.exceptions import RequestValidationError
 from sqlalchemy import select
 
 from lugnut.auth.deps import DB, utcnow
@@ -36,10 +37,21 @@ def _get_vehicle(db: DB, vehicle_id: int) -> Vehicle:
 
 
 def _check_job_types(db: DB, body: RecordIn) -> None:
-    wanted = {li.job_type_id for li in to_line_items(body) if li.job_type_id is not None}
+    items = to_line_items(body)
+    wanted = {li.job_type_id for li in items}
     found = set(db.scalars(select(JobType.id).where(JobType.id.in_(wanted))))
-    if missing := wanted - found:
-        raise HTTPException(422, f"Unknown job type ids: {sorted(missing)}")
+    errors = [
+        {
+            "type": "value_error",
+            "loc": ("body", "details", "line_items", i, "job_type_id"),
+            "msg": "Unknown job type",
+            "input": li.job_type_id,
+        }
+        for i, li in enumerate(items)
+        if li.job_type_id is not None and li.job_type_id not in found
+    ]
+    if errors:
+        raise RequestValidationError(errors)
 
 
 @router.get("/vehicles/{vehicle_id}/records")

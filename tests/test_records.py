@@ -88,6 +88,15 @@ def test_record_without_odometer_stays_null(client, vehicle):
     r = post_record(
         client, vehicle, {"type": "work", "date": "2026-10-21", "details": {"category": "repair"}}
     )
+    # a field from another type must be rejected, not silently dropped
+    assert (
+        post_raw(
+            client,
+            vehicle,
+            {"type": "work", "date": "2026-10-21", "details": {"category": "repair", "volume": 5}},
+        ).status_code
+        == 422
+    )
     assert client.get(f"/api/records/{r['id']}").json()["odometer"] is None
 
 

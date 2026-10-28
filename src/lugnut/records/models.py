@@ -43,7 +43,7 @@ class Record(Base):
     vehicle_id: Mapped[int] = mapped_column(ForeignKey("vehicle.id", ondelete="CASCADE"))
     type: Mapped[str]
     date: Mapped[dt.date | None]
-    odometer_km: Mapped[int | None]
+    odometer_km: Mapped[float | None]
     cost: Mapped[int | None]
     is_estimate: Mapped[bool] = mapped_column(default=False)
     title: Mapped[str | None]
