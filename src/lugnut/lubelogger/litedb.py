@@ -41,6 +41,7 @@ def read_collections(db: bytes) -> dict[str, list[Doc]]:
     try:
         names = _doc(db[192:PAGE], 0, 0)[0]
         by_col: defaultdict[int, list[Doc]] = defaultdict(list)
+        used: set[tuple[int, int]] = set()
         for pid in range(len(db) // PAGE):
             page = _page(db, pid)
             if page[4] != DATA_PAGE or page[23] == 0:
@@ -49,11 +50,11 @@ def read_collections(db: bytes) -> dict[str, list[Doc]]:
             for idx in range(page[30] + 1):
                 block = _block(page, idx)
                 if block is not None and block[0] == 0:
-                    raw = _follow(db, pid, idx, block)
+                    raw = _follow(db, pid, idx, block, used)
                     by_col[col_id].append(_doc(raw, 0, 0)[0])
     except (struct.error, IndexError, UnicodeDecodeError) as e:
         raise LiteDBError(f"corrupt LiteDB file: {e}") from e
-    return {name: by_col.get(col, []) for name, col in names.items() if isinstance(col, int)}
+    return {name: list(by_col.get(col, [])) for name, col in names.items() if isinstance(col, int)}
 
 
 def _page(db: bytes, pid: int) -> bytes:
@@ -67,20 +68,24 @@ def _block(page: bytes, idx: int) -> bytes | None:
     length, pos = struct.unpack_from("<HH", page, PAGE - (idx + 1) * 4)
     if length == 0:
         return None
-    if length < 6 or pos < HEADER or pos + length > PAGE - (idx + 1) * 4:
+    if length < 6 or pos < HEADER or pos + length > PAGE - (page[30] + 1) * 4:
         raise LiteDBError(f"corrupt LiteDB file: slot {idx} is out of bounds")
     return page[pos : pos + length]
 
 
-def _follow(db: bytes, pid: int, idx: int, block: bytes) -> bytes:
-    """Concatenate the payloads along a document's NextBlock chain."""
+def _follow(db: bytes, pid: int, idx: int, block: bytes, used: set[tuple[int, int]]) -> bytes:
+    """Concatenate the payloads along a document's NextBlock chain.
+
+    `used` spans the whole file: each block may belong to one document only, so a loop or
+    shared tail fails here and the bytes assembled stay bounded by the file size.
+    """
     parts = [block[6:]]
-    seen = {(pid, idx)}
+    used.add((pid, idx))
     pid, idx = struct.unpack_from("<IB", block, 1)
     while pid != END:
-        if (pid, idx) in seen:
-            raise LiteDBError("corrupt LiteDB file: data block chain loops")
-        seen.add((pid, idx))
+        if (pid, idx) in used:
+            raise LiteDBError("corrupt LiteDB file: data block used by two documents, or a loop")
+        used.add((pid, idx))
         page = _page(db, pid)
         nxt = _block(page, idx) if page[4] == DATA_PAGE else None
         if nxt is None or nxt[0] != 1:
