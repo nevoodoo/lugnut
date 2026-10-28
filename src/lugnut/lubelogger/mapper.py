@@ -1,12 +1,15 @@
 """Pure mapping from read LubeLogger collections to an import plan (no database, no files)."""
 
 import calendar
+import logging
 import re
 from dataclasses import dataclass, field
 from datetime import date, datetime, time
 from decimal import ROUND_HALF_UP, Decimal
 from typing import Any
 from zoneinfo import ZoneInfo, available_timezones
+
+log = logging.getLogger(__name__)
 
 Doc = dict[str, Any]
 
@@ -172,7 +175,9 @@ class _Mapper:
         try:
             return fn(*args)
         except (ValueError, TypeError, KeyError, ArithmeticError) as e:
-            self.warn(f"{coll} {r.get('_id', '?')}: skipped, {type(e).__name__} {str(e)[:60]}")
+            # Fixed wording only: exception text never goes back to the client.
+            log.info("lubelogger %s %s skipped: %s", coll, r.get("_id", "?"), e)
+            self.warn(f"{coll} {r.get('_id', '?')}: skipped, it couldn't be read")
             self.skip(coll)
             return None
 

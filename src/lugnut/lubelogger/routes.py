@@ -293,6 +293,9 @@ def commit_backup(
     return result
 
 
+_FILE_REASONS = {413: "it's too large", 415: "it isn't a supported file type"}
+
+
 class _Commit:
     """Writes a plan through the normal create helpers. Adds only what is new; never updates."""
 
@@ -321,9 +324,9 @@ class _Commit:
             self.warnings.append(msg)
 
     def invalid(self, source_id: str, e: ValidationError) -> None:
-        err = e.errors()[0]
-        where = ".".join(str(x) for x in err["loc"])
-        self.warn(f"{source_id}: skipped, {where}: {err['msg']}")
+        # Fixed wording only: exception text never goes back to the client.
+        log.info("import of %s failed validation: %s", source_id, e)
+        self.warn(f"{source_id}: skipped, a value in it isn't valid in Lugnut")
 
     def attach(
         self, ref: dict[str, str], vehicle_id: int, record_id: int | None
@@ -341,7 +344,8 @@ class _Commit:
             with open(full, "rb") as f:
                 a = add_attachment(self.db, self.settings, f, name, vehicle_id, record_id)
         except HTTPException as e:
-            self.warn(f"File {name!r} skipped: {e.detail}")
+            reason = _FILE_REASONS.get(e.status_code, "it couldn't be stored")
+            self.warn(f"File {name!r} skipped: {reason}")
             return None
         self.staged.append(a.stored_name)
         self.created["attachments"] += 1
