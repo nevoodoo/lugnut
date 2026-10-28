@@ -4,7 +4,7 @@ Each vehicle has an Insights page, and the vehicle's home screen shows a short v
 
 ## Fuel economy
 
-Economy is worked out from full tank to full tank. When you fill up to full, Lugnut adds the fuel from every fill since the previous full one, including partial fills in between, and divides by the distance driven. The average covers all of those stretches. "Recent" is the average of the last five, and the change shows how far it is from the overall average. Whether up is good depends on your unit: lower is better for L/100km, higher is better for mpg and km/L.
+Economy is worked out from full tank to full tank. When you fill up to full, Lugnut adds the fuel from every fill since the previous full one, including partial fills in between, and divides by the distance driven. The average covers all of those stretches. "Recent" is the average of the last five, and the change shows how far it is from the overall average. Whether up is good depends on your unit: lower is better for L/100km, higher is better for mpg.
 
 A fill is skipped when:
 
