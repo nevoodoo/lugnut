@@ -18,6 +18,8 @@ export function setUnauthorizedHandler(fn: () => void) {
   onUnauthorized = fn;
 }
 
+export const notifyUnauthorized = () => onUnauthorized();
+
 // Every request goes through here: JSON in/out, and the header the API requires on writes.
 export async function api<T>(path: string, method = "GET", body?: unknown): Promise<T> {
   const form = body instanceof FormData; // the browser sets the multipart boundary itself
@@ -26,7 +28,7 @@ export async function api<T>(path: string, method = "GET", body?: unknown): Prom
     headers: { "X-Lugnut": "1", ...(body && !form ? { "Content-Type": "application/json" } : {}) },
     body: body ? (form ? body : JSON.stringify(body)) : undefined,
   });
-  if (res.status === 401) onUnauthorized();
+  if (res.status === 401) notifyUnauthorized();
   if (!res.ok) {
     const detail = await res.json().then(
       (j) => j.detail,

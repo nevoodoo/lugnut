@@ -109,6 +109,10 @@ def test_second_import_adds_nothing(client):
     assert pv["summary"][0]["matched_vehicle_id"] == first
     res = client.post(f"/api/import/lubelogger/{tok}/commit", json=body, headers=CSRF).json()
     assert sum(res["created"].values()) == 0
+    # a car added by hand with the same plate is suggested
+    mine = client.post("/api/vehicles", json={"name": "Mine", "plate": "HANDMADE"}, headers=CSRF)
+    pv = upload(client, demo_with_plate(b"HANDMADE")).json()["summary"][0]
+    assert pv["matched_vehicle_id"] == mine.json()["id"]
     bad = {"vehicle_map": {"vehicles:1": 9999}}
     tok = upload(client, demo_with_plate(b"THIRDCAR")).json()["token"]
     res = client.post(f"/api/import/lubelogger/{tok}/preview", json=bad, headers=CSRF)

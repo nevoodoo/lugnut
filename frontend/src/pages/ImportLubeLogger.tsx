@@ -1,7 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { useState, type ChangeEvent } from "react";
+import { useRef, useState, type ChangeEvent } from "react";
 import { Link } from "react-router";
-import { api, ApiError } from "../api/client";
+import { api, ApiError, notifyUnauthorized } from "../api/client";
 import { useSettings, useVehicles } from "../api/hooks";
 import { Card } from "../components/Card";
 import { Field } from "../components/Field";
@@ -51,6 +51,7 @@ function upload(file: File, onProgress: (pct: number) => void): Promise<Preview>
     xhr.upload.onprogress = (e) => e.lengthComputable && onProgress(Math.round((e.loaded / e.total) * 100));
     xhr.onerror = () => reject(new Error("Couldn't reach the server"));
     xhr.onload = () => {
+      if (xhr.status === 401) notifyUnauthorized();
       const body = xhr.response;
       if (xhr.status < 300) return resolve(body as Preview);
       const detail = body?.detail;
@@ -69,6 +70,7 @@ const messageOf = (e: unknown): string => {
   return e instanceof Error ? e.message : String(e);
 };
 
+const one = (n: number, k: string) => `${n} ${n === 1 ? k.replace(/s$/, "") : k}`;
 const label = (k: string) => k.replace(/(\w)records$/, "$1 records");
 
 export function ImportLubeLogger() {
@@ -82,6 +84,8 @@ export function ImportLubeLogger() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<Result | null>(null);
+  const resultRef = useRef<HTMLDivElement>(null);
+  const errorRef = useRef<HTMLParagraphElement>(null);
 
   async function pick(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -123,9 +127,13 @@ export function ImportLubeLogger() {
     setError("");
     try {
       setResult(await api<Result>(`/import/lubelogger/${preview.token}/commit`, "POST", opts));
+      setBusy(false);
+      setTimeout(() => resultRef.current?.focus(), 0);
       await qc.invalidateQueries();
+      return;
     } catch (err) {
       setError(messageOf(err));
+      setTimeout(() => errorRef.current?.focus(), 0);
     }
     setBusy(false);
   }
@@ -144,12 +152,13 @@ export function ImportLubeLogger() {
     <div className="records settings import">
       <h1>Import from LubeLogger</h1>
       {error && (
-        <p className="error" role="alert">
+        <p className="error" role="alert" tabIndex={-1} ref={errorRef}>
           {error}
         </p>
       )}
 
       {result ? (
+        <div ref={resultRef} tabIndex={-1} className="result">
         <Card label="Imported">
           <p>
             Added {result.created.vehicles} vehicles, {result.created.records} records, {result.created.reminders} reminders and{" "}
@@ -170,6 +179,7 @@ export function ImportLubeLogger() {
             ))}
           </ul>
         </Card>
+        </div>
       ) : !preview ? (
         <Card label="Choose your backup">
           <p>
@@ -227,6 +237,7 @@ export function ImportLubeLogger() {
           <Card label="Vehicles">
             <div className="table-wrap">
               <table>
+                <caption className="visually-hidden">Vehicles in the backup</caption>
                 <thead>
                   <tr>
                     <th>In the backup</th>
@@ -244,7 +255,7 @@ export function ImportLubeLogger() {
                           <p className="muted">
                             {Object.entries(v.counts)
                               .filter(([, n]) => n)
-                              .map(([k, n]) => `${n} ${k}`)
+                              .map(([k, n]) => one(n, k))
                               .join(", ")}
                           </p>
                         </td>
@@ -279,6 +290,7 @@ export function ImportLubeLogger() {
               <p className="muted">Each becomes a registration or an insurance record. Change any that were guessed wrong.</p>
               <div className="table-wrap">
                 <table>
+                  <caption className="visually-hidden">Tax records in the backup</caption>
                   <thead>
                     <tr>
                       <th>Date</th>
@@ -293,7 +305,7 @@ export function ImportLubeLogger() {
                         <td>{t.description}</td>
                         <td>
                           <select
-                            aria-label={`Type of ${t.description ?? "tax record"}`}
+                            aria-label={`Type of ${t.description ?? "tax record"} on ${fmt(t.date)}`}
                             value={t.guessed_type}
                             disabled={busy}
                             onChange={(e) => change({ ...opts, tax_types: { ...opts.tax_types, [t.source_id]: e.target.value as TaxType } })}
@@ -341,6 +353,9 @@ export function ImportLubeLogger() {
           <div className="actions">
             <button className={`btn primary${busy ? " busy" : ""}`} disabled={busy} onClick={commit}>
               {busy ? "Working..." : "Import"}
+            </button>
+            <button className="btn" disabled={busy} onClick={() => { setPreview(null); setError(""); }}>
+              Choose another file
             </button>
             <span className="muted">Running this again later only adds records that are new.</span>
           </div>

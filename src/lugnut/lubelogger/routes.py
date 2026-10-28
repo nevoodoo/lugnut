@@ -155,6 +155,11 @@ def match_vehicle(
         compared = [a == b for a, b in pairs if a and b]
         if not compared or any(compared):
             return v
+    # a car added by hand: suggest it when the plate or VIN is the same
+    for v in db.scalars(select(Vehicle).order_by(Vehicle.id)):
+        for k in ("plate", "vin"):
+            if _norm(getattr(v, k)) and _norm(getattr(v, k)) == _norm(pv.vehicle.get(k)):
+                return v
     return None
 
 
@@ -162,8 +167,11 @@ def _preview(
     db: Session, token: str, plan: ImportPlan, vehicle_map: dict[str, int | Literal["new"]]
 ) -> dict[str, Any]:
     summary = []
+    targets: list[int] = []
     for pv in plan.vehicles:
         match = match_vehicle(db, pv, vehicle_map)
+        if match:
+            targets.append(match.id)
         summary.append(
             {
                 "source_id": pv.source_id,
@@ -179,7 +187,12 @@ def _preview(
     return {
         "token": token,
         "summary": summary,
-        "warnings": plan.warnings,
+        "warnings": plan.warnings
+        + (
+            ["Two vehicles in the backup go into the same vehicle"]
+            if len(targets) != len(set(targets))
+            else []
+        ),
         "skipped": plan.skipped,
         "guesses": plan.guesses,
         "tax_choices": plan.tax_choices,

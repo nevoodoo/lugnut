@@ -11,7 +11,7 @@ In LubeLogger, open Settings, then Backup, and download the zip. In Lugnut, open
 The preview shows what will be added and lets you change the parts that LubeLogger doesn't record:
 
 - **Date order and timezone.** LubeLogger stores some dates as text and its times in UTC. Lugnut guesses the date order and the timezone from your data. If a guess is wrong, change it and the preview updates.
-- **Vehicles.** Each vehicle in the backup is matched to a vehicle you already have by plate or VIN, or marked as new. You can pick a different vehicle from the list, or choose to add it as new.
+- **Vehicles.** Each vehicle in the backup is matched to one you already have by plate or VIN, and the preview lets you change that or add it as new.
 - **Tax records.** Each one is sorted into registration or insurance, using its tag first and then its description. Change the type on any that were guessed wrong.
 - **Estimates.** LubeLogger has no estimate flag. Records whose notes or description mention an estimate are marked as estimates in Lugnut, and listed so you can see them.
 - **Warnings and skipped records,** with counts.
