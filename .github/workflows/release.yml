@@ -76,11 +76,11 @@ jobs:
         with:
           ref: ${{ inputs.tag }}
           persist-credentials: false
-      - uses: actions/download-artifact@v5.0.0
+      - uses: actions/download-artifact@v8.0.2
         with:
           name: dist
           path: dist
-      - uses: actions/download-artifact@v5.0.0
+      - uses: actions/download-artifact@v8.0.2
         with:
           name: web
           path: web
