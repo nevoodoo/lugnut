@@ -49,6 +49,7 @@ export const useRecord = (id: number) => useGet<LugnutRecord>(["record", id], `/
 export const useJobTypes = () => useGet<JobType[]>(["job-types"], "/job-types");
 export const useReminders = (filters: ReminderFilters = {}) =>
   useGet<Reminder[]>(["reminders", filters], `/reminders${qs(filters)}`);
+export const useReminder = (id: number) => useGet<Reminder>(["reminders", "one", id], `/reminders/${id}`, id > 0);
 export const useTokens = () => useGet<Token[]>(["tokens"], "/tokens");
 // ponytail: no GET list for a vehicle's attachments exists yet; add the endpoint and a hook when a screen needs it.
 

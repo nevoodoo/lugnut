@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Car, House, List, LogOut, Plus, X } from "lucide-react";
+import { Bell, Car, House, List, LogOut, Plus, X } from "lucide-react";
 import { useRef } from "react";
 import { Link, NavLink, Outlet, useMatch } from "react-router";
 import { api, type User } from "../api/client";
@@ -23,7 +23,7 @@ export function Shell({ user }: { user: User }) {
     mutationFn: () => api("/auth/logout", "POST"),
     onSuccess: () => qc.setQueryData(["me"], null),
   });
-  // Only sections that exist. Add Reminders, ... here as they are built.
+  // Only sections that exist. Add the rest here as they are built.
   // "/" redirects to the last vehicle, so Home also counts as active on any vehicle page.
   const home = (
     <NavLink to="/" end className={({ isActive }) => `nav-link${isActive || onVehicle ? " active" : ""}`}>
@@ -35,6 +35,12 @@ export function Shell({ user }: { user: User }) {
     <NavLink to={`/vehicles/${current}/records`} className={({ isActive }) => `nav-link${isActive || onRecord ? " active" : ""}`}>
       <List size={20} aria-hidden="true" />
       Records
+    </NavLink>
+  );
+  const reminders = (
+    <NavLink to="/reminders" className="nav-link">
+      <Bell size={20} aria-hidden="true" />
+      Reminders
     </NavLink>
   );
   const garage = (
@@ -93,6 +99,7 @@ export function Shell({ user }: { user: User }) {
           </div>
           {home}
           {records}
+          {reminders}
           {garage}
         </nav>
         <div className="spacer">
@@ -109,6 +116,7 @@ export function Shell({ user }: { user: User }) {
         {home}
         {records}
         {add("fab")}
+        {reminders}
         {garage}
       </nav>
       {current !== undefined && (

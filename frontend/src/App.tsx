@@ -8,6 +8,8 @@ import { Login } from "./pages/Login";
 import { QuickFuel } from "./pages/QuickFuel";
 import { RecordForm } from "./pages/RecordForm";
 import { Records } from "./pages/Records";
+import { ReminderForm } from "./pages/ReminderForm";
+import { Reminders } from "./pages/Reminders";
 import { Setup } from "./pages/Setup";
 import { VehicleForm } from "./pages/VehicleForm";
 import { VehicleHome } from "./pages/VehicleHome";
@@ -44,6 +46,9 @@ export function App() {
         <Route path="vehicles/:id/records" element={<Records />} />
         <Route path="vehicles/:id/records/new" element={<RecordForm />} />
         <Route path="vehicles/:id/fuel" element={<QuickFuel />} />
+        <Route path="vehicles/:id/reminders/new" element={<ReminderForm />} />
+        <Route path="reminders" element={<Reminders />} />
+        <Route path="reminders/:reminderId" element={<ReminderForm />} />
         <Route path="records/:recordId" element={<RecordForm />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>

@@ -1,7 +1,7 @@
 import { Fuel, Gauge, Pencil, Receipt } from "lucide-react";
 import { useEffect } from "react";
 import { Link, Navigate, useParams } from "react-router";
-import { useReminders, useRecords, useSettings, useVehicle, type Reminder } from "../api/hooks";
+import { useReminders, useRecords, useSettings, useVehicle } from "../api/hooks";
 import { ApiError } from "../api/client";
 import { Card } from "../components/Card";
 import { OdometerBlock } from "../components/OdometerBlock";
@@ -9,24 +9,21 @@ import { Photo } from "../components/Photo";
 import { PhotoUpload } from "../components/PhotoUpload";
 import { PlateBadge } from "../components/PlateBadge";
 import { RecordRows } from "../components/RecordRows";
-import { Stamp } from "../components/Stamp";
-import { formatDate, formatDistance, type InstallSettings } from "../lib/format";
+import { ReminderRow } from "../components/ReminderRow";
+import { formatDate, type InstallSettings } from "../lib/format";
 import { setLastVehicle } from "../lib/lastVehicle";
 
-function Due({ vehicleId, unit, s }: { vehicleId: number; unit: "km" | "mi"; s: InstallSettings }) {
+function Due({ vehicleId, s }: { vehicleId: number; s: InstallSettings }) {
   const { data } = useReminders({ vehicle_id: vehicleId });
   if (!data?.length) return null;
-  const when = (r: Reminder) => (r.due_date ? formatDate(r.due_date, s) : formatDistance(r.due_km ?? null, unit));
   return (
     <Card label="Due">
       <ul className="rows">
         {data.map((r) => (
-          <li key={r.id} className="row">
-            <span>{r.title}</span>
-            <Stamp state={r.state}>{when(r)}</Stamp>
-          </li>
+          <ReminderRow key={r.id} r={r} s={s} />
         ))}
       </ul>
+      <Link to={`/vehicles/${vehicleId}/reminders/new`}>Add a reminder</Link>
     </Card>
   );
 }
@@ -103,7 +100,7 @@ export function VehicleHome() {
         </div>
       </div>
       <div className="vh-cards">
-        <Due vehicleId={id} unit={unit} s={s} />
+        <Due vehicleId={id} s={s} />
         <Recent vehicleId={id} unit={unit} />
       </div>
     </div>

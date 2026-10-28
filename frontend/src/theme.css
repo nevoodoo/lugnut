@@ -1014,3 +1014,45 @@ a.rec:hover .rec-title {
     animation: none !important;
   }
 }
+
+/* Reminders */
+.rem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px dashed var(--rule);
+}
+.rem:last-child {
+  border-bottom: 0;
+}
+.rem-main,
+.rem-sub {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+}
+.rem-title {
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+.rem-veh {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--muted);
+}
+.done-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+  padding: 0.75rem;
+  border: 1.5px solid var(--rule);
+  border-radius: 8px;
+  background: var(--paper);
+}
