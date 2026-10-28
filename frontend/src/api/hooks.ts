@@ -83,8 +83,18 @@ export const useSaveRecord = () =>
       api<LugnutRecord>(id ? `/records/${id}` : `/vehicles/${vehicleId}/records`, id ? "PUT" : "POST", body),
     RECORD_KEYS,
   );
-export const useDeleteRecord = () =>
-  useWrite((id: number) => api<void>(`/records/${id}`, "DELETE"), RECORD_KEYS);
+// Not useWrite: refetching the deleted record would 404 and bounce its open form to "/" before the
+// caller navigates away. Refresh the lists without waiting, and drop the record once the form is gone.
+export function useDeleteRecord() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => api<void>(`/records/${id}`, "DELETE"),
+    onSuccess: (_, id) => {
+      for (const queryKey of [["records"], ["vehicles"], ["reminders"]]) void qc.invalidateQueries({ queryKey });
+      setTimeout(() => qc.removeQueries({ queryKey: ["record", id] }));
+    },
+  });
+}
 
 export const useUpload = () =>
   useWrite(({ vehicleId, file, recordId }: { vehicleId: number; file: File; recordId?: number }) => {

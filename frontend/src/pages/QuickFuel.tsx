@@ -83,6 +83,7 @@ function QuickFuelBody({ vehicle, s }: { vehicle: Vehicle; s: Settings }) {
         onChange={setOdometer}
         error={errs.odometer}
       />
+      <DateInput label="Date" value={date} onChange={setDate} error={errs.date} />
       <label className="check">
         <input type="checkbox" role="switch" checked={full} onChange={(e) => setFull(e.target.checked)} />
         Filled the tank
@@ -91,7 +92,6 @@ function QuickFuelBody({ vehicle, s }: { vehicle: Vehicle; s: Settings }) {
         <input type="checkbox" role="switch" checked={missed} onChange={(e) => setMissed(e.target.checked)} />
         Missed logging the last fill
       </label>
-      <DateInput label="Date" value={date} onChange={setDate} error={errs.date} />
       {formError && (
         <p className="error" role="alert">
           {formError}

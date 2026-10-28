@@ -4,7 +4,7 @@ import { useCreateJobType, useJobTypes } from "../api/hooks";
 import { Field } from "./Field";
 
 // Type to search (native datalist); a name that isn't in the list can be added on the spot.
-export function JobTypePicker(props: { value: number | null; onChange: (id: number | null) => void; error?: string }) {
+export function JobTypePicker(props: { value: number | null; onChange: (id: number | null, unmatched: boolean) => void; error?: string }) {
   const types = useJobTypes().data ?? [];
   const create = useCreateJobType();
   const listId = useId();
@@ -15,7 +15,8 @@ export function JobTypePicker(props: { value: number | null; onChange: (id: numb
 
   function type(v: string) {
     setText(v);
-    props.onChange(match(v)?.id ?? null);
+    const id = match(v)?.id ?? null;
+    props.onChange(id, id === null && v.trim() !== "");
   }
 
   return (
@@ -33,7 +34,7 @@ export function JobTypePicker(props: { value: number | null; onChange: (id: numb
           type="button"
           className="btn small"
           disabled={create.isPending}
-          onClick={() => create.mutate(name, { onSuccess: (j) => props.onChange(j.id) })}
+          onClick={() => create.mutate(name, { onSuccess: (j) => props.onChange(j.id, false) })}
         >
           <Plus size={16} aria-hidden="true" /> Add "{name}"
         </button>

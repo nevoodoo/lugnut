@@ -8,6 +8,7 @@ import { NumberInput } from "./NumberInput";
 export interface Item {
   key: number; // stable React key; the server's id for saved rows
   job_type_id: number | null;
+  unmatched?: boolean; // job type text typed that isn't a known type
   description: string;
   cost: string;
   quantity: string;
@@ -38,7 +39,7 @@ export function LineItems(props: {
       <ol>
         {items.map((it, i) => (
           <li key={it.key} className="line-item" aria-label={`Line item ${i + 1}`}>
-            <JobTypePicker value={it.job_type_id} onChange={(id) => edit(i, { job_type_id: id })} error={e(i, "job_type_id")} />
+            <JobTypePicker value={it.job_type_id} onChange={(id, unmatched) => edit(i, { job_type_id: id, unmatched })} error={e(i, "job_type_id")} />
             <div className="li-desc">
               <Field label="Description" error={e(i, "description")}>
                 {(a) => <input {...a} value={it.description} onChange={(ev) => edit(i, { description: ev.target.value })} />}

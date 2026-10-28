@@ -114,6 +114,8 @@ function RecordFormBody({ type, record, vehicle, s }: { type: RecordType; record
 
   const parsedItems = items.map((it) => ({ cost: parseMoney(it.cost, s.currency), quantity: parseNumber(it.quantity) }));
   const total = lineItemsTotal(parsedItems.map((p) => ({ cost: p.cost === "invalid" ? null : p.cost, quantity: p.quantity === "invalid" ? null : p.quantity })));
+  // Rows with no job type, description or cost aren't saved; kept maps sent rows back to on-screen ones.
+  const kept = items.flatMap((it, i) => (it.job_type_id !== null || it.unmatched || it.description.trim() || it.cost.trim() ? [i] : []));
   const known = (k: string) =>
     COMMON.includes(k) || k.startsWith("tags") || k.startsWith("custom_fields") || k.startsWith("details.line_items.") || def.fields.some((f) => k === `details.${f.name}`);
 
@@ -140,12 +142,16 @@ function RecordFormBody({ type, record, vehicle, s }: { type: RecordType; record
       else d[f.name] = v.trim();
     }
     if (type === "work")
-      d.line_items = items.map((it, i) => ({
-        job_type_id: it.job_type_id,
-        description: blank(it.description),
-        cost: money(`details.line_items.${i}.cost`, it.cost),
-        quantity: num(`details.line_items.${i}.quantity`, it.quantity),
-      }));
+      d.line_items = kept.map((i) => {
+        const it = items[i];
+        if (it.unmatched) local[`details.line_items.${i}.job_type_id`] = "Pick a job type or add it";
+        return {
+          job_type_id: it.job_type_id,
+          description: blank(it.description),
+          cost: money(`details.line_items.${i}.cost`, it.cost),
+          quantity: num(`details.line_items.${i}.quantity`, it.quantity),
+        };
+      });
     const cost = money("cost", common.cost as string);
     const body: RecordIn = {
       type,
@@ -177,7 +183,10 @@ function RecordFormBody({ type, record, vehicle, s }: { type: RecordType; record
           else setCreated(r.id);
         },
         onError: (err) => {
-          const mapped = err instanceof ApiError ? fieldErrors(err.detail) : {};
+          const raw = err instanceof ApiError ? fieldErrors(err.detail) : {};
+          const mapped = Object.fromEntries(
+            Object.entries(raw).map(([k, m]) => [k.replace(/^details\.line_items\.(\d+)/, (_, j) => `details.line_items.${kept[Number(j)]}`), m]),
+          );
           setErrs(mapped);
           const stray = Object.entries(mapped).filter(([k]) => !known(k));
           if (!Object.keys(mapped).length) setFormError(err.message);
@@ -321,7 +330,7 @@ function RecordFormBody({ type, record, vehicle, s }: { type: RecordType; record
           question={`Delete this ${label.toLowerCase()} record and its files? This can't be undone.`}
           pending={del.isPending}
           error={del.error?.message}
-          onConfirm={() => del.mutate(record.id, { onSuccess: () => nav(back) })}
+          onConfirm={() => del.mutate(record.id, { onSuccess: () => nav(back, { replace: true }) })}
         />
       )}
     </form>
