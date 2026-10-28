@@ -21,7 +21,7 @@ PORT=8080
 ASSUME_YES="${LUGNUT_YES:-0}"
 WORKDIR=""
 
-log() { printf '==> %s\n' "$*"; }
+log() { printf '==> %s\n' "$*" >&2; }
 die() { printf 'error: %s\n' "$*" >&2; exit 1; }
 
 cleanup() {
@@ -54,7 +54,8 @@ ask() {
 
 # Storage names that can hold the given content type (vztmpl or rootdir).
 list_storages() {
-  pvesm status --content "$1" | awk 'NR > 1 { print $1 }'
+  # pvesm probes every storage; a broken or inactive one prints errors we do not need.
+  pvesm status --content "$1" 2>/dev/null | awk 'NR > 1 { print $1 }'
 }
 
 show_storages() {
@@ -175,6 +176,14 @@ install() {
     die "container $ctid already exists"
   fi
 
+  if [[ "$ASSUME_YES" != 1 ]]; then
+    printf '\nAbout to create container %s (%s): %s cores, %s MB RAM, %s GB disk on %s, network %s.\n' \
+      "$ctid" "$hostname" "$cores" "$ram" "$disk" "$rstorage" "$ip" >&2
+    local ok
+    read -r -p "Continue? [Y/n]: " ok || ok=""
+    [[ -z "$ok" || "$ok" =~ ^[Yy] ]] || die "cancelled"
+  fi
+
   script="$(find_install_script)"
   template="$(ensure_template "$tstorage")"
   create_container "$ctid" "$hostname" "$tstorage" "$template" "$rstorage" "$disk" "$cores" "$ram" "$net"
@@ -189,7 +198,7 @@ install() {
 
   ip_addr="$(container_ip "$ctid")"
   log "Lugnut is ready: http://$ip_addr:$PORT"
-  echo "Create your account there. Update later with: bash lugnut.sh update $ctid"
+  echo "Open it to create your account. To update later, run on this host: pct exec $ctid -- lugnut-update"
 }
 
 update() {
