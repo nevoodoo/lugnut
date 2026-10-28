@@ -1,4 +1,4 @@
-import { FileText, Paperclip } from "lucide-react";
+import { Car, FileText, Paperclip } from "lucide-react";
 import { Link, useSearchParams } from "react-router";
 import { useAttachments, useSettings, useVehicles, type Attachment } from "../api/hooks";
 import { EmptyState } from "../components/EmptyState";
@@ -31,6 +31,12 @@ export function Documents() {
 
   if (vehicles.isError || settings.isError || files.isError) return <p className="error">Couldn't load documents.</p>;
   if (!vehicles.data || !settings.data) return null;
+  if (vehicles.data.length === 0)
+    return (
+      <EmptyState icon={Car} title="No vehicles yet" action={<Link className="btn primary" to="/vehicles/new">Add a vehicle</Link>}>
+        Add a vehicle, then attach photos and PDFs to its records.
+      </EmptyState>
+    );
   const s = settings.data;
   const images = files.data?.filter((a) => a.content_type.startsWith("image/")) ?? [];
   const others = files.data?.filter((a) => !a.content_type.startsWith("image/")) ?? [];

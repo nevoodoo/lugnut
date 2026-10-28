@@ -1,5 +1,5 @@
-import { Check, Copy, LogOut } from "lucide-react";
-import { useRef, useState, type FormEvent } from "react";
+import { Check, Copy, KeyRound, LogOut } from "lucide-react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { ApiError, type User } from "../api/client";
 import {
@@ -212,6 +212,7 @@ function DiscordSection({ isSet }: { isSet: boolean }) {
   const [url, setUrl] = useState("");
   const [err, setErr] = useState("");
   const [result, setResult] = useState("");
+  const [removing, setRemoving] = useState(false);
 
   function submit(e: FormEvent) {
     e.preventDefault();
@@ -252,12 +253,37 @@ function DiscordSection({ isSet }: { isSet: boolean }) {
               >
                 {test.isPending ? "Sending..." : "Send test"}
               </button>
-              <button type="button" className="btn danger-btn" disabled={set.isPending} onClick={() => set.mutate(null, { onSuccess: () => setResult("") })}>
+              <button type="button" className="btn danger-btn" aria-expanded={removing} onClick={() => setRemoving(true)}>
                 Remove
               </button>
             </>
           )}
         </div>
+        {removing && (
+          <div className="ask" role="alert">
+            <p>Remove the Discord webhook? Reminders will stop posting.</p>
+            <div className="actions">
+              <button
+                type="button"
+                className="btn danger-btn"
+                disabled={set.isPending}
+                onClick={() =>
+                  set.mutate(null, {
+                    onSuccess: () => {
+                      setResult("");
+                      setRemoving(false);
+                    },
+                  })
+                }
+              >
+                Yes, remove
+              </button>
+              <button type="button" className="btn" onClick={() => setRemoving(false)}>
+                Keep it
+              </button>
+            </div>
+          </div>
+        )}
         <div role="status">
           {result && <p className={result.startsWith("Test failed") ? "error" : "muted"}>{result}</p>}
         </div>
@@ -276,6 +302,9 @@ function TokensSection({ s }: { s: SettingsData }) {
   const [fresh, setFresh] = useState<string | null>(null);
   const [copied, setCopied] = useState("");
   const box = useRef<HTMLInputElement>(null);
+  const { reset } = create;
+  // Drop the raw token from the mutation cache when leaving the page.
+  useEffect(() => reset, [reset]);
   const when = (iso: string) => formatDate(dateInZone(iso, s.timezone), s);
 
   function submit(e: FormEvent) {
@@ -315,7 +344,10 @@ function TokensSection({ s }: { s: SettingsData }) {
             <button type="button" className="btn primary" onClick={copy}>
               <Copy size={18} aria-hidden="true" /> Copy
             </button>
-            <button type="button" className="btn" onClick={() => setFresh(null)}>
+            <button type="button" className="btn" onClick={() => {
+                setFresh(null);
+                reset();
+              }}>
               <Check size={18} aria-hidden="true" /> Done
             </button>
             <span role="status" className="muted">
@@ -341,6 +373,8 @@ function TokensSection({ s }: { s: SettingsData }) {
               </div>
               <ConfirmDelete
                 label="Revoke"
+                icon={KeyRound}
+                confirmLabel="Yes, revoke"
                 question={`Revoke ${t.name}? Anything using it will stop working.`}
                 pending={revoke.isPending}
                 error={revoke.isError ? revoke.error.message : undefined}
