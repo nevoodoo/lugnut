@@ -8,9 +8,9 @@ import { OdometerBlock } from "../components/OdometerBlock";
 import { Photo } from "../components/Photo";
 import { PhotoUpload } from "../components/PhotoUpload";
 import { PlateBadge } from "../components/PlateBadge";
+import { RecordRows } from "../components/RecordRows";
 import { Stamp } from "../components/Stamp";
-import { FEATURES } from "../features";
-import { formatDate, formatDistance, formatMoney, type InstallSettings } from "../lib/format";
+import { formatDate, formatDistance, type InstallSettings } from "../lib/format";
 import { setLastVehicle } from "../lib/lastVehicle";
 
 function Due({ vehicleId, unit, s }: { vehicleId: number; unit: "km" | "mi"; s: InstallSettings }) {
@@ -31,24 +31,17 @@ function Due({ vehicleId, unit, s }: { vehicleId: number; unit: "km" | "mi"; s: 
   );
 }
 
-function Recent({ vehicleId, s }: { vehicleId: number; s: InstallSettings }) {
+function Recent({ vehicleId, unit }: { vehicleId: number; unit: "km" | "mi" }) {
   const { data } = useRecords(vehicleId, { limit: 5 });
   if (!data?.length) return null;
   return (
-    <Card label="Recent records">
-      <ul className="rows">
-        {data.map((r) => (
-          <li key={r.id}>
-            <Link className="row" to={`/records/${r.id}`}>
-              <span>
-                {formatDate(r.date ?? null, s)} {r.title ?? r.type}
-              </span>
-              <span className="mono">{formatMoney(r.cost ?? null, s)}</span>
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </Card>
+    <section className="card recent">
+      <div className="page-head">
+        <h2 className="label">Recent records</h2>
+        <Link to={`/vehicles/${vehicleId}/records`}>All records</Link>
+      </div>
+      <RecordRows records={data} unit={unit} />
+    </section>
   );
 }
 
@@ -93,19 +86,15 @@ export function VehicleHome() {
           </div>
           <OdometerBlock value={v.current_odometer} unit={unit} />
           <div className="actions">
-            {FEATURES.records && (
-              <>
-                <Link className="btn primary" to={`/vehicles/${id}/records/new?type=fuel`}>
-                  <Fuel size={18} aria-hidden="true" /> Log fuel
-                </Link>
-                <Link className="btn" to={`/vehicles/${id}/records/new?type=odometer`}>
-                  <Gauge size={18} aria-hidden="true" /> Odometer
-                </Link>
-                <Link className="btn" to={`/vehicles/${id}/records/new?type=toll`}>
-                  <Receipt size={18} aria-hidden="true" /> Expense
-                </Link>
-              </>
-            )}
+            <Link className="btn primary" to={`/vehicles/${id}/fuel`}>
+              <Fuel size={18} aria-hidden="true" /> Log fuel
+            </Link>
+            <Link className="btn" to={`/vehicles/${id}/records/new?type=odometer`}>
+              <Gauge size={18} aria-hidden="true" /> Odometer
+            </Link>
+            <Link className="btn" to={`/vehicles/${id}/records/new?type=toll`}>
+              <Receipt size={18} aria-hidden="true" /> Expense
+            </Link>
             <Link className="btn" to={`/vehicles/${id}/edit`}>
               <Pencil size={18} aria-hidden="true" /> Edit
             </Link>
@@ -115,7 +104,7 @@ export function VehicleHome() {
       </div>
       <div className="vh-cards">
         <Due vehicleId={id} unit={unit} s={s} />
-        {FEATURES.records && <Recent vehicleId={id} s={s} />}
+        <Recent vehicleId={id} unit={unit} />
       </div>
     </div>
   );

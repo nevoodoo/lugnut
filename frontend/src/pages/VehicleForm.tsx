@@ -1,9 +1,11 @@
-import { Plus, Trash2 } from "lucide-react";
-import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
+import { useState, type FormEvent, type ReactNode } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router";
 import { ApiError } from "../api/client";
 import { useDeleteVehicle, useSaveVehicle, useSettings, useVehicle, type Vehicle, type VehicleIn } from "../api/hooks";
+import { ConfirmDelete } from "../components/ConfirmDelete";
+import { CustomFields, customFieldErrors, pairsToObject, type Pairs } from "../components/CustomFields";
 import { Field } from "../components/Field";
+import { MoneyInput, moneyError } from "../components/MoneyInput";
 import { PhotoUpload } from "../components/PhotoUpload";
 import { fieldErrors } from "../lib/errors";
 import { moneyToText, parseMoney } from "../lib/format";
@@ -49,37 +51,25 @@ function VehicleFormBody(props: { id?: number; vehicle?: Vehicle; currency: stri
   const save = useSaveVehicle();
   const del = useDeleteVehicle();
   const [f, setF] = useState<Form>(() => toForm(vehicle, currency));
-  const [custom, setCustom] = useState<[string, string][]>(() => Object.entries(vehicle?.custom_fields ?? {}));
+  const [custom, setCustom] = useState<Pairs>(() => Object.entries(vehicle?.custom_fields ?? {}));
   const [errs, setErrs] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState("");
-  const [confirming, setConfirming] = useState(false);
   const [delError, setDelError] = useState("");
-  const confirmRef = useRef<HTMLParagraphElement>(null);
-  useEffect(() => {
-    if (confirming) confirmRef.current?.focus();
-  }, [confirming]);
   const set = (k: string) => (e: { target: { value: string } }) => setF((p) => ({ ...p, [k]: e.target.value }));
 
   function onSubmit(e: FormEvent) {
     e.preventDefault();
-    const local: Record<string, string> = {};
+    const local: Record<string, string> = customFieldErrors(custom);
     const money: Record<string, number | null> = {};
     for (const k of MONEY) {
       const m = parseMoney(f[k], currency);
-      if (m === "invalid") local[k] = "Enter an amount like 12.50";
+      if (m === "invalid") local[k] = moneyError(currency);
       else money[k] = m;
     }
     const adj = Number(f.odometer_adjustment || 0);
     if (!Number.isFinite(adj)) local.odometer_adjustment = "Enter a number";
     const year = blank(f.year);
     if (year !== null && !/^\d{4}$/.test(year)) local.year = "Enter a four digit year";
-    const seen = new Set<string>();
-    custom.forEach(([k], i) => {
-      const name = k.trim();
-      if (!name) local[`custom.${i}`] = "Give this field a name or remove it";
-      else if (seen.has(name)) local[`custom.${i}`] = "Another field already has this name";
-      seen.add(name);
-    });
     if (Object.keys(local).length) return setErrs(local);
 
     const body = {
@@ -98,7 +88,7 @@ function VehicleFormBody(props: { id?: number; vehicle?: Vehicle; currency: stri
       sold_date: blank(f.sold_date),
       sold_price: money.sold_price,
       odometer_adjustment: adj,
-      custom_fields: Object.fromEntries(custom.map(([k, v]) => [k.trim(), v])),
+      custom_fields: pairsToObject(custom),
       archived: !!f.archived,
     } satisfies VehicleIn;
     setErrs({});
@@ -120,6 +110,9 @@ function VehicleFormBody(props: { id?: number; vehicle?: Vehicle; currency: stri
     <Field label={label} error={errs[k]} hint={hint}>
       {(a) => <input {...a} {...props} value={f[k]} onChange={set(k)} />}
     </Field>
+  );
+  const money = (k: string, label: string) => (
+    <MoneyInput label={label} currency={currency} value={f[k]} onChange={(v) => setF((p) => ({ ...p, [k]: v }))} error={errs[k]} />
   );
   const fuel = ["petrol", "diesel", "hybrid", "lpg"];
 
@@ -152,9 +145,9 @@ function VehicleFormBody(props: { id?: number; vehicle?: Vehicle; currency: stri
       </Group>
       <Group title="Ownership">
         {text("purchase_date", "Purchase date", { type: "date" })}
-        {text("purchase_price", "Purchase price", { inputMode: "decimal" }, `In ${currency}`)}
+        {money("purchase_price", "Purchase price")}
         {text("sold_date", "Sold date", { type: "date" })}
-        {text("sold_price", "Sold price", { inputMode: "decimal" }, `In ${currency}`)}
+        {money("sold_price", "Sold price")}
       </Group>
       <Group title="Units">
         <Field label="Distance unit" error={errs.distance_unit} hint="Overrides the install default for this vehicle.">
@@ -169,22 +162,7 @@ function VehicleFormBody(props: { id?: number; vehicle?: Vehicle; currency: stri
         {text("odometer_adjustment", "Odometer adjustment", { inputMode: "decimal" }, "Added to the highest recorded reading.")}
       </Group>
       <Group title="Custom fields">
-        {custom.map(([k, v], i) => (
-          <div key={i} className="kv">
-            <Field label="Name" error={errs[`custom.${i}`] ?? errs[`custom_fields.${k}`]}>
-              {(a) => <input {...a} value={k} onChange={(e) => setCustom(custom.map((p, j) => (j === i ? [e.target.value, p[1]] : p)))} />}
-            </Field>
-            <Field label="Value">
-              {(a) => <input {...a} value={v} onChange={(e) => setCustom(custom.map((p, j) => (j === i ? [p[0], e.target.value] : p)))} />}
-            </Field>
-            <button type="button" className="icon-btn" aria-label={`Remove field ${k || i + 1}`} onClick={() => setCustom(custom.filter((_, j) => j !== i))}>
-              <Trash2 size={18} aria-hidden="true" />
-            </button>
-          </div>
-        ))}
-        <button type="button" className="btn" onClick={() => setCustom([...custom, ["", ""]])}>
-          <Plus size={18} aria-hidden="true" /> Add field
-        </button>
+        <CustomFields value={custom} onChange={setCustom} errs={errs} />
       </Group>
       {id && vehicle && (
         <Group title="Photo">
@@ -209,35 +187,13 @@ function VehicleFormBody(props: { id?: number; vehicle?: Vehicle; currency: stri
         </Link>
       </div>
       {id && (
-        <div className="danger card">
-          {confirming ? (
-            <>
-              <p ref={confirmRef} tabIndex={-1} role="alert">Delete {vehicle?.name}? Its records and files will be deleted too. This can't be undone.</p>
-              <div className="actions">
-                <button
-                  type="button"
-                  className="btn danger-btn"
-                  disabled={del.isPending}
-                  onClick={() => del.mutate(id, { onSuccess: () => nav("/garage"), onError: (e) => setDelError(e.message) })}
-                >
-                  Yes, delete
-                </button>
-                <button type="button" className="btn" onClick={() => setConfirming(false)}>
-                  Keep it
-                </button>
-              </div>
-              {delError && (
-                <p className="error" role="alert">
-                  {delError}
-                </p>
-              )}
-            </>
-          ) : (
-            <button type="button" className="btn danger-btn" onClick={() => setConfirming(true)}>
-              <Trash2 size={18} aria-hidden="true" /> Delete vehicle
-            </button>
-          )}
-        </div>
+        <ConfirmDelete
+          label="Delete vehicle"
+          question={`Delete ${vehicle?.name}? Its records and files will be deleted too. This can't be undone.`}
+          pending={del.isPending}
+          error={delError}
+          onConfirm={() => del.mutate(id, { onSuccess: () => nav("/garage"), onError: (e) => setDelError(e.message) })}
+        />
       )}
     </form>
   );

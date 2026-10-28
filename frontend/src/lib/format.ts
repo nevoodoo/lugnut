@@ -7,7 +7,7 @@ const UNIT_LABELS: Record<Unit, string> = { km: "km", mi: "mi", L: "L", gal_us: 
 export const unitLabel = (unit: Unit): string => UNIT_LABELS[unit];
 
 // Money is integer minor units; the decimal places follow the currency (JPY 0, AUD 2).
-const currencyDigits = (currency: string): number =>
+export const currencyDigits = (currency: string): number =>
   new Intl.NumberFormat(undefined, { style: "currency", currency }).resolvedOptions().maximumFractionDigits ?? 2;
 
 export function formatMoney(minor: number | null, s: Pick<InstallSettings, "currency">): string {
@@ -51,3 +51,19 @@ export function moneyToText(minor: number | null | undefined, currency: string):
   const d = currencyDigits(currency);
   return (minor / 10 ** d).toFixed(d);
 }
+
+// Decimal text from a form field to a number, with the same empty/invalid contract as parseMoney.
+export function parseNumber(text: string): number | null | "invalid" {
+  const t = text.trim().replace(/,/g, "");
+  if (t === "") return null;
+  const n = Number(t);
+  return Number.isFinite(n) ? n : "invalid";
+}
+
+// Today's date as YYYY-MM-DD in the install timezone (en-CA formats dates that way).
+export const today = (timezone: string): string =>
+  new Intl.DateTimeFormat("en-CA", { timeZone: timezone }).format(new Date());
+
+// A line item's cost is per unit; a blank quantity counts as one. Result is in minor units.
+export const lineItemsTotal = (items: { cost: number | null; quantity: number | null }[]): number =>
+  items.reduce((sum, i) => sum + Math.round((i.cost ?? 0) * (i.quantity ?? 1)), 0);

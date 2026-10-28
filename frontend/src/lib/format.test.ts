@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { formatDate, parseMoney } from "./format";
+import { formatDate, lineItemsTotal, parseMoney } from "./format";
 import type { InstallSettings as S } from "./format";
 
 test("parseMoney accepts common forms and rejects garbage", () => {
@@ -16,4 +16,9 @@ test("parseMoney accepts common forms and rejects garbage", () => {
 test("formatDate follows install format", () => {
   expect(formatDate("2027-01-15", { date_format: "DD/MM/YYYY" } as S)).toBe("15/01/2027");
   expect(formatDate("2027-01-15", { date_format: "MM/DD/YYYY" } as S)).toBe("01/15/2027");
+});
+
+test("lineItemsTotal multiplies cost by quantity, blank quantity is one", () => {
+  // catches: a work record's default cost ignoring quantities or blank rows
+  expect(lineItemsTotal([{ cost: 32000, quantity: 2 }, { cost: 4550, quantity: null }, { cost: null, quantity: 3 }])).toBe(68550);
 });

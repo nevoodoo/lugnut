@@ -6,7 +6,7 @@ export function fieldErrors(detail: unknown): Record<string, string> {
   for (const e of detail) {
     if (!e || !Array.isArray(e.loc) || typeof e.msg !== "string") continue;
     const path = e.loc.slice(e.loc[0] === "body" ? 1 : 0).join(".");
-    if (path && !(path in out)) out[path] = e.msg;
+    if (path && !(path in out)) out[path] = e.msg.replace(/^Value error, /, "");
   }
   return out;
 }

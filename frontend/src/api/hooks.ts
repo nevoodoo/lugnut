@@ -42,10 +42,10 @@ export const useRegions = () => useGet<Record<string, unknown>[]>(["regions"], "
 // The API returns only archived vehicles when archived=true, so the two lists are separate queries.
 export const useVehicles = (archived = false) =>
   useGet<Vehicle[]>(archived ? ["vehicles", "archived"] : ["vehicles"], `/vehicles${archived ? "?archived=true" : ""}`);
-export const useVehicle = (id: number) => useGet<Vehicle>(["vehicles", id], `/vehicles/${id}`);
+export const useVehicle = (id: number) => useGet<Vehicle>(["vehicles", id], `/vehicles/${id}`, id > 0);
 export const useRecords = (vehicleId: number, filters: RecordFilters = {}) =>
   useGet<LugnutRecord[]>(["records", vehicleId, filters], `/vehicles/${vehicleId}/records${qs(filters)}`);
-export const useRecord = (id: number) => useGet<LugnutRecord>(["record", id], `/records/${id}`);
+export const useRecord = (id: number) => useGet<LugnutRecord>(["record", id], `/records/${id}`, id > 0);
 export const useJobTypes = () => useGet<JobType[]>(["job-types"], "/job-types");
 export const useReminders = (filters: ReminderFilters = {}) =>
   useGet<Reminder[]>(["reminders", filters], `/reminders${qs(filters)}`);
@@ -93,6 +93,10 @@ export const useUpload = () =>
     if (recordId !== undefined) form.append("record_id", String(recordId));
     return api<S["AttachmentOut"]>(`/vehicles/${vehicleId}/attachments`, "POST", form);
   }, [["records"], ["record"]]);
+export const useDeleteAttachment = () =>
+  useWrite((id: number) => api<void>(`/attachments/${id}`, "DELETE"), [["records"], ["record"]]);
+export const useCreateJobType = () =>
+  useWrite((name: string) => api<JobType>("/job-types", "POST", { name }), [["job-types"]]);
 export const useSetPhoto = () =>
   useWrite(
     ({ vehicleId, attachmentId }: { vehicleId: number; attachmentId: number | null }) =>
