@@ -46,7 +46,11 @@ Run this on the Proxmox host:
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/nevoodoo/lugnut/main/deploy/proxmox/lugnut.sh)" -- update 120
 ```
 
-Replace `120` with your container ID. It runs `lugnut-update` inside the container, which upgrades the package, restarts the service and prints the running version. You can also run `lugnut-update` yourself from a shell in the container.
+Replace `120` with your container ID. It runs `lugnut-update` inside the container, which upgrades the package, restarts the service and prints the running version. You can also run `lugnut-update` yourself from a shell in the container. To run it straight from the host, give the full path, since `pct exec` doesn't include `/usr/local/bin` in its search path:
+
+```sh
+pct exec 120 -- env LUGNUT_VERSION=0.1.0rc2 /usr/local/bin/lugnut-update
+```
 
 To move to a specific version or wheel, set `LUGNUT_VERSION` or `LUGNUT_SOURCE` on the same command. An installation pinned to a version stays on it with a plain update.
 

@@ -199,7 +199,7 @@ install() {
 
   ip_addr="$(container_ip "$ctid")"
   log "Lugnut is ready: http://$ip_addr:$PORT"
-  echo "Open it to create your account. To update later, run on this host: pct exec $ctid -- lugnut-update"
+  echo "Open it to create your account. To update later, run on this host: pct exec $ctid -- /usr/local/bin/lugnut-update"
 }
 
 update() {
