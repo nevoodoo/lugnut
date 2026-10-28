@@ -47,12 +47,12 @@ jobs:
         run: |
           mkdir web
           (cd src/lugnut/static && zip -qr "$GITHUB_WORKSPACE/web/lugnut-web-$VERSION.zip" .)
-      - uses: actions/upload-artifact@v5.0.0
+      - uses: actions/upload-artifact@v7.0.2
         with:
           name: dist
           path: dist/*
           if-no-files-found: error
-      - uses: actions/upload-artifact@v5.0.0
+      - uses: actions/upload-artifact@v7.0.2
         with:
           name: web
           path: web/*

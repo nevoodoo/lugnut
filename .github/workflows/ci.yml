@@ -76,7 +76,7 @@ jobs:
           "$RUNNER_TEMP/venv/bin/lugnut" serve --port 8080 &
           trap 'kill $!' EXIT
           curl --fail --retry 15 --retry-delay 1 --retry-connrefused http://127.0.0.1:8080/api/health
-      - uses: actions/upload-artifact@v5.0.0
+      - uses: actions/upload-artifact@v7.0.2
         with:
           name: wheel
           path: dist/*.whl
