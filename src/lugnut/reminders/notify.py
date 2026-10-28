@@ -13,8 +13,7 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 
 from lugnut.reminders.models import Reminder
-from lugnut.reminders.state import RANK, _by_date, _by_km, due_state
-from lugnut.reminders.state import today as utc_today
+from lugnut.reminders.state import RANK, _by_date, _by_km, due_state, local_today
 from lugnut.settings_api import get_install_settings, get_webhook_url, is_discord_webhook
 from lugnut.units import km_to
 from lugnut.vehicles.models import Vehicle
@@ -105,12 +104,12 @@ def check_and_notify(db: Session, today: date, send: Callable[[str, dict[str, An
     return sent
 
 
-# ponytail: known limits. Day boundaries are UTC. Two app instances on one database can send
+# ponytail: known limits. Two app instances on one database can send
 # duplicate messages. A tick holding a stale row can overwrite a concurrent PUT's notified_state
-# reset. Fix with a per-user timezone, a send lock or claim row, and a re-read before the write.
+# reset. Fix with a send lock or claim row, and a re-read before the write.
 def _run_once(engine: Engine) -> None:
     with Session(engine) as db:
-        check_and_notify(db, utc_today(), discord_send)
+        check_and_notify(db, local_today(get_install_settings(db).timezone), discord_send)
 
 
 async def reminder_loop(engine: Engine, interval: int) -> None:

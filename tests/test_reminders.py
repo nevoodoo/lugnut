@@ -1,9 +1,10 @@
 from dataclasses import dataclass
-from datetime import date
+from datetime import UTC, date, datetime
 
 import pytest
 from conftest import CSRF
 
+from lugnut.reminders import state
 from lugnut.reminders.models import Reminder
 from lugnut.reminders.state import add_months, due_state
 
@@ -84,3 +85,13 @@ def test_complete_on_miles_vehicle_converts_odometer(client, logged_in):
     assert round(r["warn_km"]) == 621  # the 1000 km default, shown in miles
     done = complete(client, r["id"], {"odometer": 10000})
     assert done["due_km"] == pytest.approx(15000)
+
+
+def test_due_state_uses_install_timezone(client, vehicle, monkeypatch):
+    # catches: "today" still being the UTC date. 2026-10-27 22:00 UTC is already 28 Oct in Auckland.
+    monkeypatch.setattr(state, "_now", lambda: datetime(2026, 10, 27, 22, 0, tzinfo=UTC))
+    client.put("/api/settings", json={"timezone": "Pacific/Auckland"}, headers=CSRF)
+    r = post_reminder(client, vehicle, {"title": "Rego", "due_date": "2026-10-28"})
+    assert client.get(f"/api/reminders/{r['id']}").json()["state"] == "due"
+    client.put("/api/settings", json={"timezone": "UTC"}, headers=CSRF)
+    assert client.get(f"/api/reminders/{r['id']}").json()["state"] == "soon"

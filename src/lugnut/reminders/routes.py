@@ -16,7 +16,7 @@ from lugnut.reminders.schemas import (
     to_out,
     to_row_values,
 )
-from lugnut.reminders.state import RANK, State, add_months
+from lugnut.reminders.state import RANK, State, add_months, local_today
 from lugnut.settings_api import get_install_settings
 from lugnut.units import km_from, km_to
 from lugnut.vehicles.models import Vehicle
@@ -132,8 +132,9 @@ def complete_reminder(reminder_id: int, body: CompleteIn, _: Writer, db: DB) -> 
     if r.completed_at is not None:
         raise HTTPException(409, "Reminder already completed")
     v = _get_vehicle(db, r.vehicle_id)
-    unit = effective_unit(v.distance_unit, get_install_settings(db))
-    done = body.date or utcnow().date()
+    install = get_install_settings(db)
+    unit = effective_unit(v.distance_unit, install)
+    done = body.date or local_today(install.timezone)
     if r.repeat_months is None and r.repeat_km is None:
         r.completed_at = utcnow()
     else:

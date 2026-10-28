@@ -2,6 +2,7 @@ import calendar
 import datetime as dt
 from datetime import date
 from typing import Literal, Protocol
+from zoneinfo import ZoneInfo
 
 State = Literal["ok", "soon", "due", "overdue"]
 RANK: dict[State, int] = {"ok": 0, "soon": 1, "due": 2, "overdue": 3}
@@ -14,9 +15,13 @@ class ReminderLike(Protocol):
     warn_km: float
 
 
-def today() -> date:
-    """The one clock for due states; callers pass it down so tests can pin it."""
-    return dt.datetime.now(dt.UTC).date()
+def _now() -> dt.datetime:
+    return dt.datetime.now(dt.UTC)  # the test seam: patch this to freeze the clock
+
+
+def local_today(tz_name: str) -> date:
+    """The one definition of "today": the calendar date in the install timezone."""
+    return _now().astimezone(ZoneInfo(tz_name)).date()
 
 
 def add_months(d: date, n: int) -> date:

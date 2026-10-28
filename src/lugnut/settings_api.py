@@ -3,6 +3,7 @@ import re
 from importlib.resources import files
 from typing import Any, Literal
 from urllib.parse import urlsplit
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from fastapi import APIRouter
 from fastapi.exceptions import RequestValidationError
@@ -33,6 +34,7 @@ class InstallSettings(BaseModel):
     distance_unit: Literal["km", "mi"]
     volume_unit: Literal["L", "gal_us", "gal_imp"]
     date_format: str = Field(min_length=1, max_length=32)
+    timezone: str
 
 
 class SettingsIn(BaseModel):
@@ -43,6 +45,7 @@ class SettingsIn(BaseModel):
     distance_unit: Literal["km", "mi"] | None = None
     volume_unit: Literal["L", "gal_us", "gal_imp"] | None = None
     date_format: str | None = Field(None, min_length=1, max_length=32)
+    timezone: str | None = None
     discord_webhook_set: bool | None = None  # read-only; accepted so a GET body PUTs back
 
 
@@ -103,7 +106,12 @@ def _defaults(code: str) -> InstallSettings:
 
 def get_install_settings(db: Session) -> InstallSettings:
     row = db.get(Setting, KEY)
-    return InstallSettings.model_validate(row.value) if row else _defaults(DEFAULT_REGION)
+    if not row:
+        return _defaults(DEFAULT_REGION)
+    # rows saved before a field existed get that field from their region
+    return InstallSettings.model_validate(
+        {**_defaults(row.value["region"]).model_dump(), **row.value}
+    )
 
 
 @router.get("/regions")
@@ -130,6 +138,11 @@ def replace_settings(body: SettingsIn, _: Writer, db: DB) -> SettingsOut:
                 }
             ]
         )
+    if body.timezone is not None:
+        try:
+            ZoneInfo(body.timezone)
+        except (ZoneInfoNotFoundError, ValueError, OSError):
+            raise _bad("timezone", f"Unknown timezone {body.timezone!r}", body.timezone) from None
     new = _defaults(code).model_copy(
         update=body.model_dump(exclude_none=True, exclude={"discord_webhook_set"})
     )
