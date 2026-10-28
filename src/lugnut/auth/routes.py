@@ -35,7 +35,7 @@ Writer = Annotated[User, Depends(require("write"))]
 
 class SetupIn(BaseModel):
     username: str = Field(min_length=1, max_length=64)
-    password: str = Field(min_length=12, max_length=1024)
+    password: str = Field(min_length=1, max_length=1024)
 
 
 class LoginIn(BaseModel):
