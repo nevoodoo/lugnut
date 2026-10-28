@@ -53,7 +53,7 @@ class SettingsOut(InstallSettings):
 class DiscordIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    url: str | None = Field(None, max_length=512)
+    url: str | None = None
 
 
 def _bad(field: str, msg: str, value: Any) -> RequestValidationError:
@@ -151,7 +151,7 @@ def set_discord(body: DiscordIn, _: Writer, db: DB) -> SettingsOut:
             db.delete(row)
     else:
         url = body.url
-        if not is_discord_webhook(url):
+        if len(url) > 512 or not is_discord_webhook(url):
             raise _bad("url", "Must be a https://discord.com/api/webhooks/... URL", "")
         if row:
             row.value = url

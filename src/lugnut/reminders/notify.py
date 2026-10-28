@@ -46,6 +46,8 @@ def discord_send(url: str, payload: dict[str, Any]) -> None:
         with urllib.request.build_opener(_NoRedirect).open(req, timeout=10) as resp:
             if not 200 <= resp.status < 300:
                 raise NotifyError(f"Discord returned HTTP {resp.status}")
+    except NotifyError:
+        raise
     except urllib.error.HTTPError as e:
         raise NotifyError(f"Discord returned HTTP {e.code}") from None
     except (urllib.error.URLError, TimeoutError):
@@ -70,7 +72,11 @@ def check_and_notify(db: Session, today: date, send: Callable[[str, dict[str, An
         return 0
     install = get_install_settings(db)
     sent = 0
-    q = select(Reminder, Vehicle).join(Vehicle).where(Reminder.completed_at.is_(None))
+    q = (
+        select(Reminder, Vehicle)
+        .join(Vehicle)
+        .where(Reminder.completed_at.is_(None), Vehicle.archived.is_(False))
+    )
     for r, v in db.execute(q).all():
         state = due_state(r, today, current_odometer_km(db, v))
         notify = "soon" if state == "due" else state
@@ -99,6 +105,9 @@ def check_and_notify(db: Session, today: date, send: Callable[[str, dict[str, An
     return sent
 
 
+# ponytail: known limits. Day boundaries are UTC. Two app instances on one database can send
+# duplicate messages. A tick holding a stale row can overwrite a concurrent PUT's notified_state
+# reset. Fix with a per-user timezone, a send lock or claim row, and a re-read before the write.
 def _run_once(engine: Engine) -> None:
     with Session(engine) as db:
         check_and_notify(db, utc_today(), discord_send)

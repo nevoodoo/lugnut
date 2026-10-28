@@ -1,14 +1,11 @@
+import asyncio
 from datetime import date
 
 import pytest
 from conftest import CSRF
 
+from lugnut.reminders import notify
 from lugnut.reminders.notify import check_and_notify
-
-
-@pytest.fixture
-def vehicle(client, logged_in):
-    return client.post("/api/vehicles", json={"name": "Daily"}, headers=CSRF).json()["id"]
 
 
 def set_webhook(client, url):
@@ -44,3 +41,25 @@ def test_webhook_url_is_secret_and_restricted(client, logged_in):
     assert set_webhook(client, "https://discord.com/api/webhooks/1/abc").status_code == 200
     s = client.get("/api/settings").json()
     assert s["discord_webhook_set"] is True and "abc" not in str(s)
+
+
+def test_reminder_loop_survives_errors(monkeypatch):
+    # catches: one failed tick killing the background loop
+    ticks = []
+
+    def boom(engine):
+        ticks.append(1)
+        raise RuntimeError("db down")
+
+    sleeps = []
+
+    async def fake_sleep(_):
+        sleeps.append(1)
+        if len(sleeps) == 2:
+            raise asyncio.CancelledError
+
+    monkeypatch.setattr(notify, "_run_once", boom)
+    monkeypatch.setattr(notify.asyncio, "sleep", fake_sleep)
+    with pytest.raises(asyncio.CancelledError):
+        asyncio.run(notify.reminder_loop(None, 1))
+    assert len(ticks) == 2
