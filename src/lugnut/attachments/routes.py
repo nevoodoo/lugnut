@@ -62,7 +62,9 @@ def upload_attachment(
     if record_id is not None:
         rec = db.get(Record, record_id)
         if rec is None or rec.vehicle_id != vehicle_id:
-            raise _invalid(("body", "record_id"), "record_id is not a record of this vehicle", record_id)
+            raise _invalid(
+                ("body", "record_id"), "record_id is not a record of this vehicle", record_id
+            )
     settings = request.app.state.settings
     stored_name, content_type, size, sha256 = storage.save(settings, file)
     a = Attachment(
