@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.0-rc.3](https://github.com/nevoodoo/lugnut/compare/v0.1.0-rc.2...v0.1.0-rc.3) (2026-10-28)
+
+
+### Features
+
+* let owners change their password and username ([#26](https://github.com/nevoodoo/lugnut/issues/26)) ([699fecb](https://github.com/nevoodoo/lugnut/commit/699fecb91c420a769120f3ff6764c741507c0b96))
+
+
+### Bug fixes
+
+* show the full path to lugnut-update for pct exec ([#25](https://github.com/nevoodoo/lugnut/issues/25)) ([c240060](https://github.com/nevoodoo/lugnut/commit/c2400601fc16814a63472d3ac6202207d4c105db))
+
 ## [0.1.0-rc.2](https://github.com/nevoodoo/lugnut/compare/v0.1.0-rc.1...v0.1.0-rc.2) (2026-10-28)
 
 
