@@ -36,7 +36,7 @@ WORK_WITH_THREE_LINES_EDITED = {  # every writable field set to a non-default va
     },
 }
 
-SERVER_SET = {"id", "vehicle_id", "created_at", "updated_at"}
+SERVER_SET = {"id", "vehicle_id", "created_at", "updated_at", "attachments"}
 
 
 def strip_ids(record):

@@ -6,6 +6,7 @@ export class ApiError extends Error {
   constructor(
     readonly status: number,
     message: string,
+    readonly detail?: unknown, // the raw 422 list, for fieldErrors()
   ) {
     super(message);
   }
@@ -19,10 +20,11 @@ export function setUnauthorizedHandler(fn: () => void) {
 
 // Every request goes through here: JSON in/out, and the header the API requires on writes.
 export async function api<T>(path: string, method = "GET", body?: unknown): Promise<T> {
+  const form = body instanceof FormData; // the browser sets the multipart boundary itself
   const res = await fetch(`/api${path}`, {
     method,
-    headers: { "X-Lugnut": "1", ...(body ? { "Content-Type": "application/json" } : {}) },
-    body: body ? JSON.stringify(body) : undefined,
+    headers: { "X-Lugnut": "1", ...(body && !form ? { "Content-Type": "application/json" } : {}) },
+    body: body ? (form ? body : JSON.stringify(body)) : undefined,
   });
   if (res.status === 401) onUnauthorized();
   if (!res.ok) {
@@ -30,7 +32,7 @@ export async function api<T>(path: string, method = "GET", body?: unknown): Prom
       (j) => j.detail,
       () => undefined,
     );
-    throw new ApiError(res.status, typeof detail === "string" ? detail : res.statusText);
+    throw new ApiError(res.status, typeof detail === "string" ? detail : res.statusText, detail);
   }
   return res.status === 204 ? (undefined as T) : res.json();
 }

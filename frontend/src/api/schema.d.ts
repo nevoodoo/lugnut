@@ -108,6 +108,324 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/regions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Regions */
+        get: operations["list_regions_api_regions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Settings */
+        get: operations["read_settings_api_settings_get"];
+        /** Replace Settings */
+        put: operations["replace_settings_api_settings_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/settings/discord": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Set Discord */
+        put: operations["set_discord_api_settings_discord_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/settings/discord/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Test Discord */
+        post: operations["test_discord_api_settings_discord_test_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/vehicles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Vehicles */
+        get: operations["list_vehicles_api_vehicles_get"];
+        put?: never;
+        /** Create Vehicle */
+        post: operations["create_vehicle_api_vehicles_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/vehicles/{vehicle_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Vehicle */
+        get: operations["read_vehicle_api_vehicles__vehicle_id__get"];
+        /** Replace Vehicle */
+        put: operations["replace_vehicle_api_vehicles__vehicle_id__put"];
+        post?: never;
+        /** Delete Vehicle */
+        delete: operations["delete_vehicle_api_vehicles__vehicle_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/vehicles/{vehicle_id}/records": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Records */
+        get: operations["list_records_api_vehicles__vehicle_id__records_get"];
+        put?: never;
+        /** Create Record */
+        post: operations["create_record_api_vehicles__vehicle_id__records_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/records/{record_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Record */
+        get: operations["read_record_api_records__record_id__get"];
+        /** Replace Record */
+        put: operations["replace_record_api_records__record_id__put"];
+        post?: never;
+        /** Delete Record */
+        delete: operations["delete_record_api_records__record_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/job-types": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Job Types */
+        get: operations["list_job_types_api_job_types_get"];
+        put?: never;
+        /** Create Job Type */
+        post: operations["create_job_type_api_job_types_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/job-types/{job_type_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Job Type */
+        delete: operations["delete_job_type_api_job_types__job_type_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/vehicles/{vehicle_id}/attachments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Attachments */
+        get: operations["list_attachments_api_vehicles__vehicle_id__attachments_get"];
+        put?: never;
+        /** Upload Attachment */
+        post: operations["upload_attachment_api_vehicles__vehicle_id__attachments_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/attachments/{attachment_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Attachment */
+        get: operations["read_attachment_api_attachments__attachment_id__get"];
+        put?: never;
+        post?: never;
+        /** Delete Attachment */
+        delete: operations["delete_attachment_api_attachments__attachment_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/attachments/{attachment_id}/file": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Download Attachment */
+        get: operations["download_attachment_api_attachments__attachment_id__file_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/vehicles/{vehicle_id}/photo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Set Photo */
+        put: operations["set_photo_api_vehicles__vehicle_id__photo_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/reminders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Reminders */
+        get: operations["list_reminders_api_reminders_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/vehicles/{vehicle_id}/reminders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create Reminder */
+        post: operations["create_reminder_api_vehicles__vehicle_id__reminders_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/reminders/{reminder_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Reminder */
+        get: operations["read_reminder_api_reminders__reminder_id__get"];
+        /** Replace Reminder */
+        put: operations["replace_reminder_api_reminders__reminder_id__put"];
+        post?: never;
+        /** Delete Reminder */
+        delete: operations["delete_reminder_api_reminders__reminder_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/reminders/{reminder_id}/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Complete Reminder */
+        post: operations["complete_reminder_api_reminders__reminder_id__complete_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/health": {
         parameters: {
             query?: never;
@@ -129,10 +447,73 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AttachmentOut */
+        AttachmentOut: {
+            /** Id */
+            id: number;
+            /** Vehicle Id */
+            vehicle_id: number;
+            /** Record Id */
+            record_id: number | null;
+            /** Filename */
+            filename: string;
+            /** Content Type */
+            content_type: string;
+            /** Size */
+            size: number;
+            /** Sha256 */
+            sha256: string;
+            /** Created At */
+            created_at: string;
+        };
+        /** AttachmentRef */
+        AttachmentRef: {
+            /** Id */
+            id: number;
+            /** Filename */
+            filename: string;
+            /** Content Type */
+            content_type: string;
+            /** Size */
+            size: number;
+        };
+        /** Body_upload_attachment_api_vehicles__vehicle_id__attachments_post */
+        Body_upload_attachment_api_vehicles__vehicle_id__attachments_post: {
+            /** File */
+            file: string;
+            /** Record Id */
+            record_id?: number | null;
+        };
+        /** CompleteIn */
+        CompleteIn: {
+            /** Date */
+            date?: string | null;
+            /** Odometer */
+            odometer?: number | null;
+        };
+        /** DiscordIn */
+        DiscordIn: {
+            /** Url */
+            url?: string | null;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /** JobTypeIn */
+        JobTypeIn: {
+            /** Name */
+            name: string;
+        };
+        /** JobTypeOut */
+        JobTypeOut: {
+            /** Name */
+            name: string;
+            /** Id */
+            id: number;
+            /** Builtin */
+            builtin: boolean;
         };
         /** LoginIn */
         LoginIn: {
@@ -140,6 +521,201 @@ export interface components {
             username: string;
             /** Password */
             password: string;
+        };
+        /** PhotoIn */
+        PhotoIn: {
+            /** Attachment Id */
+            attachment_id: number | null;
+        };
+        /**
+         * RecordIn
+         * @description PUT replaces the whole record, line items included.
+         */
+        RecordIn: {
+            /**
+             * Type
+             * @enum {string}
+             */
+            type: "work" | "fuel" | "odometer" | "registration" | "insurance" | "inspection" | "toll" | "parking" | "fine" | "todo" | "note";
+            /** Date */
+            date?: string | null;
+            /** Odometer */
+            odometer?: number | null;
+            /** Cost */
+            cost?: number | null;
+            /**
+             * Is Estimate
+             * @default false
+             */
+            is_estimate: boolean;
+            /** Title */
+            title?: string | null;
+            /** Notes */
+            notes?: string | null;
+            /** Tags */
+            tags?: string[];
+            /** Custom Fields */
+            custom_fields?: {
+                [key: string]: string;
+            };
+            /** Details */
+            details?: unknown;
+        };
+        /** RecordOut */
+        RecordOut: {
+            /**
+             * Type
+             * @enum {string}
+             */
+            type: "work" | "fuel" | "odometer" | "registration" | "insurance" | "inspection" | "toll" | "parking" | "fine" | "todo" | "note";
+            /** Date */
+            date?: string | null;
+            /** Odometer */
+            odometer?: number | null;
+            /** Cost */
+            cost?: number | null;
+            /**
+             * Is Estimate
+             * @default false
+             */
+            is_estimate: boolean;
+            /** Title */
+            title?: string | null;
+            /** Notes */
+            notes?: string | null;
+            /** Tags */
+            tags?: string[];
+            /** Custom Fields */
+            custom_fields?: {
+                [key: string]: string;
+            };
+            /** Id */
+            id: number;
+            /** Vehicle Id */
+            vehicle_id: number;
+            /** Details */
+            details: {
+                [key: string]: unknown;
+            };
+            /** Created At */
+            created_at: string;
+            /** Updated At */
+            updated_at: string;
+            /** Attachments */
+            attachments?: components["schemas"]["AttachmentRef"][];
+        };
+        /** ReminderIn */
+        ReminderIn: {
+            /** Title */
+            title: string;
+            /** Notes */
+            notes?: string | null;
+            /** Due Date */
+            due_date?: string | null;
+            /** Due Km */
+            due_km?: number | null;
+            /** Repeat Months */
+            repeat_months?: number | null;
+            /** Repeat Km */
+            repeat_km?: number | null;
+            /**
+             * Warn Days
+             * @default 30
+             */
+            warn_days: number;
+            /** Warn Km */
+            warn_km?: number | null;
+        };
+        /** ReminderOut */
+        ReminderOut: {
+            /** Title */
+            title: string;
+            /** Notes */
+            notes?: string | null;
+            /** Due Date */
+            due_date?: string | null;
+            /** Due Km */
+            due_km?: number | null;
+            /** Repeat Months */
+            repeat_months?: number | null;
+            /** Repeat Km */
+            repeat_km?: number | null;
+            /**
+             * Warn Days
+             * @default 30
+             */
+            warn_days: number;
+            /** Warn Km */
+            warn_km: number;
+            /** Id */
+            id: number;
+            /** Vehicle Id */
+            vehicle_id: number;
+            /**
+             * Distance Unit Effective
+             * @enum {string}
+             */
+            distance_unit_effective: "km" | "mi";
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "manual" | "expiry";
+            /** Expiry Type */
+            expiry_type: ("registration" | "insurance" | "inspection") | null;
+            /** Source Record Id */
+            source_record_id: number | null;
+            /** Notified State */
+            notified_state: string | null;
+            /** Completed At */
+            completed_at: string | null;
+            /** Created At */
+            created_at: string;
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "ok" | "soon" | "due" | "overdue";
+        };
+        /** SettingsIn */
+        SettingsIn: {
+            /** Region */
+            region?: string | null;
+            /** Currency */
+            currency?: string | null;
+            /** Distance Unit */
+            distance_unit?: ("km" | "mi") | null;
+            /** Volume Unit */
+            volume_unit?: ("L" | "gal_us" | "gal_imp") | null;
+            /** Date Format */
+            date_format?: string | null;
+            /** Timezone */
+            timezone?: string | null;
+            /** Discord Webhook Set */
+            discord_webhook_set?: boolean | null;
+        };
+        /** SettingsOut */
+        SettingsOut: {
+            /** Region */
+            region: string;
+            /** Currency */
+            currency: string;
+            /**
+             * Distance Unit
+             * @enum {string}
+             */
+            distance_unit: "km" | "mi";
+            /**
+             * Volume Unit
+             * @enum {string}
+             */
+            volume_unit: "L" | "gal_us" | "gal_imp";
+            /** Date Format */
+            date_format: string;
+            /** Timezone */
+            timezone: string;
+            /** Discord Webhook Set */
+            discord_webhook_set: boolean;
         };
         /** SetupIn */
         SetupIn: {
@@ -183,10 +759,7 @@ export interface components {
              * @enum {string}
              */
             scope: "read" | "write";
-            /**
-             * Created At
-             * Format: date-time
-             */
+            /** Created At */
             created_at: string;
             /** Last Used At */
             last_used_at: string | null;
@@ -210,6 +783,113 @@ export interface components {
             input?: unknown;
             /** Context */
             ctx?: Record<string, never>;
+        };
+        /**
+         * VehicleIn
+         * @description PUT replaces the whole vehicle, so omitted fields reset to these defaults.
+         */
+        VehicleIn: {
+            /** Name */
+            name: string;
+            /** Year */
+            year?: number | null;
+            /** Make */
+            make?: string | null;
+            /** Model */
+            model?: string | null;
+            /** Plate */
+            plate?: string | null;
+            /** Vin */
+            vin?: string | null;
+            /** Engine Number */
+            engine_number?: string | null;
+            /** Colour */
+            colour?: string | null;
+            /** Fuel Type */
+            fuel_type?: ("petrol" | "diesel" | "hybrid" | "lpg") | null;
+            /** Distance Unit */
+            distance_unit?: ("km" | "mi") | null;
+            /** Purchase Date */
+            purchase_date?: string | null;
+            /** Purchase Price */
+            purchase_price?: number | null;
+            /** Sold Date */
+            sold_date?: string | null;
+            /** Sold Price */
+            sold_price?: number | null;
+            /**
+             * Odometer Adjustment
+             * @description Read and returned in distance_unit_effective. A PUT that changes distance_unit must send the adjustment in the new unit.
+             * @default 0
+             */
+            odometer_adjustment: number;
+            /** Custom Fields */
+            custom_fields?: {
+                [key: string]: string;
+            };
+            /**
+             * Archived
+             * @default false
+             */
+            archived: boolean;
+        };
+        /** VehicleOut */
+        VehicleOut: {
+            /** Name */
+            name: string;
+            /** Year */
+            year?: number | null;
+            /** Make */
+            make?: string | null;
+            /** Model */
+            model?: string | null;
+            /** Plate */
+            plate?: string | null;
+            /** Vin */
+            vin?: string | null;
+            /** Engine Number */
+            engine_number?: string | null;
+            /** Colour */
+            colour?: string | null;
+            /** Fuel Type */
+            fuel_type?: ("petrol" | "diesel" | "hybrid" | "lpg") | null;
+            /** Distance Unit */
+            distance_unit?: ("km" | "mi") | null;
+            /** Purchase Date */
+            purchase_date?: string | null;
+            /** Purchase Price */
+            purchase_price?: number | null;
+            /** Sold Date */
+            sold_date?: string | null;
+            /** Sold Price */
+            sold_price?: number | null;
+            /** Odometer Adjustment */
+            odometer_adjustment: number;
+            /** Custom Fields */
+            custom_fields?: {
+                [key: string]: string;
+            };
+            /**
+             * Archived
+             * @default false
+             */
+            archived: boolean;
+            /** Id */
+            id: number;
+            /**
+             * Distance Unit Effective
+             * @enum {string}
+             */
+            distance_unit_effective: "km" | "mi";
+            /**
+             * Current Odometer
+             * @description Highest recorded odometer plus the adjustment, in distance_unit_effective.
+             */
+            current_odometer: number | null;
+            /** Photo Attachment Id */
+            photo_attachment_id: number | null;
+            /** Created At */
+            created_at: string;
         };
     };
     responses: never;
@@ -416,6 +1096,936 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_regions_api_regions_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    }[];
+                };
+            };
+        };
+    };
+    read_settings_api_settings_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SettingsOut"];
+                };
+            };
+        };
+    };
+    replace_settings_api_settings_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SettingsIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SettingsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_discord_api_settings_discord_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DiscordIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SettingsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    test_discord_api_settings_discord_test_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    list_vehicles_api_vehicles_get: {
+        parameters: {
+            query?: {
+                archived?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VehicleOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_vehicle_api_vehicles_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VehicleIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VehicleOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_vehicle_api_vehicles__vehicle_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                vehicle_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VehicleOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    replace_vehicle_api_vehicles__vehicle_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                vehicle_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VehicleIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VehicleOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_vehicle_api_vehicles__vehicle_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                vehicle_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_records_api_vehicles__vehicle_id__records_get: {
+        parameters: {
+            query?: {
+                type?: ("work" | "fuel" | "odometer" | "registration" | "insurance" | "inspection" | "toll" | "parking" | "fine" | "todo" | "note") | null;
+                from?: string | null;
+                to?: string | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path: {
+                vehicle_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecordOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_record_api_vehicles__vehicle_id__records_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                vehicle_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RecordIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecordOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_record_api_records__record_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                record_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecordOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    replace_record_api_records__record_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                record_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RecordIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecordOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_record_api_records__record_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                record_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_job_types_api_job_types_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobTypeOut"][];
+                };
+            };
+        };
+    };
+    create_job_type_api_job_types_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["JobTypeIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobTypeOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_job_type_api_job_types__job_type_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_type_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_attachments_api_vehicles__vehicle_id__attachments_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                vehicle_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AttachmentOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    upload_attachment_api_vehicles__vehicle_id__attachments_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                vehicle_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_attachment_api_vehicles__vehicle_id__attachments_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AttachmentOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_attachment_api_attachments__attachment_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                attachment_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AttachmentOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_attachment_api_attachments__attachment_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                attachment_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    download_attachment_api_attachments__attachment_id__file_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                attachment_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_photo_api_vehicles__vehicle_id__photo_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                vehicle_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PhotoIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: number | null;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_reminders_api_reminders_get: {
+        parameters: {
+            query?: {
+                state?: ("ok" | "soon" | "due" | "overdue") | null;
+                vehicle_id?: number | null;
+                include_completed?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReminderOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_reminder_api_vehicles__vehicle_id__reminders_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                vehicle_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReminderIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReminderOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_reminder_api_reminders__reminder_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                reminder_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReminderOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    replace_reminder_api_reminders__reminder_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                reminder_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReminderIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReminderOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_reminder_api_reminders__reminder_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                reminder_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    complete_reminder_api_reminders__reminder_id__complete_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                reminder_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CompleteIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReminderOut"];
+                };
             };
             /** @description Validation Error */
             422: {

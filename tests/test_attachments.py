@@ -30,11 +30,18 @@ def test_upload_returns_object_and_never_escapes_dir(client, vehicle, data_dir):
     # catches: JSON-quoted string responses (LubeLogger) and path traversal via filename
     r = upload(client, vehicle, name="../../evil.png", body=PNG_BYTES)
     assert isinstance(r.json(), dict) and r.json()["filename"] == "evil.png"
+    assert client.get(f"/api/vehicles/{vehicle}/attachments").json() == [r.json()]
+    assert client.get("/api/vehicles/9999/attachments").status_code == 404
     assert list((data_dir / "attachments").iterdir())  # stored inside
     assert not (data_dir.parent / "evil.png").exists()
     assert client.get(f"/api/attachments/{r.json()['id']}/file").content == PNG_BYTES
     other = post_record(client, _new_vehicle(client), MINIMAL_WORK)
     assert upload(client, vehicle, record_id=other["id"]).status_code == 422  # another vehicle's
+    rec = post_record(client, vehicle, MINIMAL_WORK)
+    a = upload(client, vehicle, record_id=rec["id"]).json()
+    got = client.get(f"/api/records/{rec['id']}").json()
+    assert got["attachments"] == [{k: a[k] for k in ("id", "filename", "content_type", "size")}]
+    assert client.put(f"/api/records/{rec['id']}", json=got, headers=CSRF).status_code == 200
 
 
 def test_oversized_and_wrong_type_rejected(client, vehicle):

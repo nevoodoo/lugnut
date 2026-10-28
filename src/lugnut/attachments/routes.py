@@ -6,6 +6,7 @@ from fastapi import APIRouter, Form, HTTPException, Request, UploadFile
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
+from sqlalchemy import select
 
 from lugnut.attachments import storage
 from lugnut.attachments.models import Attachment
@@ -84,6 +85,18 @@ def upload_attachment(
         storage.delete(settings, stored_name)
         raise
     return _out(a)
+
+
+@router.get("/vehicles/{vehicle_id}/attachments")
+def list_attachments(vehicle_id: int, _: Reader, db: DB) -> list[AttachmentOut]:
+    if db.get(Vehicle, vehicle_id) is None:
+        raise HTTPException(404, "Vehicle not found")
+    rows = db.scalars(
+        select(Attachment)
+        .where(Attachment.vehicle_id == vehicle_id)
+        .order_by(Attachment.created_at.desc(), Attachment.id.desc())
+    )
+    return [_out(a) for a in rows]
 
 
 @router.get("/attachments/{attachment_id}")
