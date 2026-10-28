@@ -31,6 +31,10 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    ignore:
+      # Node majors are moved by hand to the next LTS line, not to odd-numbered releases.
+      - dependency-name: node
+        update-types: ["version-update:semver-major"]
     cooldown:
       default-days: 7
     groups:
