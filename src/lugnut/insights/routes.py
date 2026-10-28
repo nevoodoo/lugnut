@@ -153,7 +153,9 @@ def _economy_fn(unit: DistanceUnit, volume_unit: VolumeUnit) -> tuple[EconomyUni
     return label, lambda litres, km: (km / KM_PER_MI) / l_to(litres, gal)
 
 
-def _economy(e: calc.Economy, unit: DistanceUnit, convert: Convert) -> EconomyOut:
+def _economy(
+    e: calc.Economy, unit: DistanceUnit, volume_unit: VolumeUnit, convert: Convert
+) -> EconomyOut:
     average = convert(e.litres, e.distance_km) if e.distance_km else None
     recent = None if e.recent_litres_per_km is None else convert(e.recent_litres_per_km, 1.0)
     change = None if average is None or recent is None else (recent - average) / average * 100
@@ -166,7 +168,7 @@ def _economy(e: calc.Economy, unit: DistanceUnit, convert: Convert) -> EconomyOu
                 date=s.date,
                 odometer=km_to(s.odometer_km, unit),
                 distance=km_to(s.distance_km, unit),
-                volume=s.litres,
+                volume=l_to(s.litres, volume_unit),
                 value=convert(s.litres, s.distance_km),
                 outlier=s.outlier,
             )
@@ -214,7 +216,7 @@ def get_insights(_: Reader, db: DB, vehicle_id: int) -> InsightsOut:
             per_month=None if own.total is None or not own.months else round(own.total / own.months),
             missing=own.missing,
         ),
-        economy=_economy(calc.economy(rows), unit, convert),
+        economy=_economy(calc.economy(rows), unit, install.volume_unit, convert),
         repeat_jobs=[
             RepeatJobOut(
                 name=j.name,
