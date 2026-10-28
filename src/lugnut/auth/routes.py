@@ -1,5 +1,4 @@
 import threading
-from datetime import datetime
 from typing import Annotated
 
 from argon2 import PasswordHasher
@@ -20,6 +19,7 @@ from lugnut.auth.deps import (
     utcnow,
 )
 from lugnut.auth.models import ApiToken, LoginSession, User
+from lugnut.timeutil import UtcDatetime
 
 router = APIRouter(prefix="/api")
 _hasher = PasswordHasher()
@@ -58,8 +58,8 @@ class TokenOut(BaseModel):
     id: int
     name: str
     scope: Scope
-    created_at: datetime
-    last_used_at: datetime | None
+    created_at: UtcDatetime
+    last_used_at: UtcDatetime | None
 
 
 class TokenCreated(BaseModel):

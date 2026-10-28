@@ -18,3 +18,7 @@ class Settings(BaseSettings):
     @property
     def backup_dir(self) -> Path:
         return self.data_dir / "backups"
+
+    @property
+    def attachments_dir(self) -> Path:
+        return self.data_dir / "attachments"

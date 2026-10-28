@@ -1,0 +1,30 @@
+{
+  "code": "gb",
+  "name": "United Kingdom",
+  "currency": "GBP",
+  "distance_unit": "mi",
+  "volume_unit": "L",
+  "date_format": "DD/MM/YYYY",
+  "labels": {
+    "registration": "Vehicle tax",
+    "inspection": "MOT"
+  },
+  "record_types": [
+    "work",
+    "fuel",
+    "odometer",
+    "registration",
+    "insurance",
+    "inspection",
+    "toll",
+    "parking",
+    "fine",
+    "todo",
+    "note"
+  ],
+  "expiry_reminder_days": {
+    "registration": 30,
+    "insurance": 30,
+    "inspection": 30
+  }
+}

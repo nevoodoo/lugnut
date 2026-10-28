@@ -2,13 +2,14 @@ import base64
 import hashlib
 import secrets
 from collections.abc import Callable
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta
 from typing import Annotated, Literal
 
 from fastapi import Depends, HTTPException, Request, Response
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from lugnut import timeutil
 from lugnut.auth.models import ApiToken, LoginSession, User
 from lugnut.db import get_session
 
@@ -22,8 +23,8 @@ DB = Annotated[Session, Depends(get_session)]
 
 
 def utcnow() -> datetime:
-    # Columns are naive DateTime; store UTC.
-    return datetime.now(UTC).replace(tzinfo=None)
+    # Columns are naive DateTime holding UTC; timeutil.UtcDatetime re-tags on the way out.
+    return timeutil.utcnow().replace(tzinfo=None)
 
 
 def new_secret(prefix: str = "") -> str:

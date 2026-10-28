@@ -34,11 +34,6 @@ class FakeClock:
 
 
 @pytest.fixture
-def logged_in(client):
-    assert client.post("/api/setup", json=U).status_code == 201
-
-
-@pytest.fixture
 def write_token(client, logged_in):
     return _make_token(client, "write")
 

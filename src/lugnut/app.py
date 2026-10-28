@@ -4,11 +4,17 @@ from importlib.metadata import version
 
 from fastapi import FastAPI
 
+from lugnut.attachments.routes import router as attachments_router
 from lugnut.auth.ratelimit import LoginLimiter
 from lugnut.auth.routes import router as auth_router
+from lugnut.bodylimit import BodyLimit
 from lugnut.db import get_engine
 from lugnut.migrate import upgrade_database
+from lugnut.records.job_types import router as job_types_router
+from lugnut.records.routes import router as records_router
 from lugnut.settings import Settings
+from lugnut.settings_api import router as settings_router
+from lugnut.vehicles.routes import router as vehicles_router
 from lugnut.web import mount_frontend
 
 
@@ -22,10 +28,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         _app.state.engine.dispose()
 
     app = FastAPI(title="Lugnut", lifespan=lifespan)
+    app.add_middleware(BodyLimit)
     app.state.settings = settings
     app.state.engine = get_engine(settings)
     app.state.login_limiter = LoginLimiter()
     app.include_router(auth_router)
+    app.include_router(settings_router)
+    app.include_router(vehicles_router)
+    app.include_router(records_router)
+    app.include_router(job_types_router)
+    app.include_router(attachments_router)
 
     @app.get("/api/health")
     def health() -> dict[str, str]:

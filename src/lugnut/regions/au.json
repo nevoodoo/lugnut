@@ -1,0 +1,30 @@
+{
+  "code": "au",
+  "name": "Australia",
+  "currency": "AUD",
+  "distance_unit": "km",
+  "volume_unit": "L",
+  "date_format": "DD/MM/YYYY",
+  "labels": {
+    "registration": "Rego",
+    "inspection": "Roadworthy"
+  },
+  "record_types": [
+    "work",
+    "fuel",
+    "odometer",
+    "registration",
+    "insurance",
+    "inspection",
+    "toll",
+    "parking",
+    "fine",
+    "todo",
+    "note"
+  ],
+  "expiry_reminder_days": {
+    "registration": 30,
+    "insurance": 30,
+    "inspection": 30
+  }
+}
