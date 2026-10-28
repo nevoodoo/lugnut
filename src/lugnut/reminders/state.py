@@ -1,4 +1,5 @@
 import calendar
+import datetime as dt
 from datetime import date
 from typing import Literal, Protocol
 
@@ -13,6 +14,11 @@ class ReminderLike(Protocol):
     warn_km: float
 
 
+def today() -> date:
+    """The one clock for due states; callers pass it down so tests can pin it."""
+    return dt.datetime.now(dt.UTC).date()
+
+
 def add_months(d: date, n: int) -> date:
     y, m = divmod(d.month - 1 + n, 12)
     year, month = d.year + y, m + 1
@@ -23,7 +29,9 @@ def _by_date(r: ReminderLike, today: date) -> State:
     if r.due_date is None:
         return "ok"
     days = (r.due_date - today).days
-    return "overdue" if days < 0 else "due" if days == 0 else "soon" if days <= r.warn_days else "ok"
+    return (
+        "overdue" if days < 0 else "due" if days == 0 else "soon" if days <= r.warn_days else "ok"
+    )
 
 
 def _by_km(r: ReminderLike, odometer_km: float | None) -> State:

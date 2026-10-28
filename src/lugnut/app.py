@@ -1,3 +1,5 @@
+import asyncio
+import contextlib
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from importlib.metadata import version
@@ -12,6 +14,7 @@ from lugnut.db import get_engine
 from lugnut.migrate import upgrade_database
 from lugnut.records.job_types import router as job_types_router
 from lugnut.records.routes import router as records_router
+from lugnut.reminders.notify import reminder_loop
 from lugnut.reminders.routes import router as reminders_router
 from lugnut.settings import Settings
 from lugnut.settings_api import router as settings_router
@@ -25,7 +28,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @asynccontextmanager
     async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
         upgrade_database(settings)
+        loop = None
+        if settings.reminder_interval_seconds > 0:
+            loop = asyncio.create_task(
+                reminder_loop(_app.state.engine, settings.reminder_interval_seconds)
+            )
         yield
+        if loop:
+            loop.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await loop
         _app.state.engine.dispose()
 
     app = FastAPI(title="Lugnut", lifespan=lifespan)

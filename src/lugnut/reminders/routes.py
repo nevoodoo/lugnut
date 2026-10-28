@@ -104,7 +104,10 @@ def replace_reminder(reminder_id: int, body: ReminderIn, _: Writer, db: DB) -> R
         if errors:
             raise RequestValidationError(errors)
     unit = effective_unit(_get_vehicle(db, r.vehicle_id).distance_unit, get_install_settings(db))
-    for k, val in to_row_values(body, unit).items():
+    values = to_row_values(body, unit)
+    if values["due_date"] != r.due_date or values["due_km"] != r.due_km:
+        r.notified_state = None  # a moved due point earns a fresh notification
+    for k, val in values.items():
         setattr(r, k, val)
     db.commit()
     return _out(db, r)

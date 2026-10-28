@@ -4,7 +4,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, field_validator, model_validator
 
 from lugnut.reminders.models import Reminder
-from lugnut.reminders.state import State, due_state
+from lugnut.reminders.state import State, due_state, today
 from lugnut.settings_api import InstallSettings
 from lugnut.timeutil import UtcDatetime
 from lugnut.units import DistanceUnit, km_from, km_to
@@ -92,5 +92,5 @@ def to_out(
     for k in KM_FIELDS:
         if data[k] is not None:
             data[k] = km_to(data[k], unit)
-    state = "ok" if r.completed_at else due_state(r, dt.datetime.now(dt.UTC).date(), odometer_km)
+    state = "ok" if r.completed_at else due_state(r, today(), odometer_km)
     return ReminderOut(**data, distance_unit_effective=unit, state=state)
