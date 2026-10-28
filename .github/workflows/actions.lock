@@ -9,7 +9,7 @@ workflows:
         - 'actions/download-artifact@v5.0.0'
         - 'actions/setup-node@v6.5.0'
         - 'actions/upload-artifact@v5.0.0'
-        - 'astral-sh/setup-uv@v7.6.0'
+        - 'astral-sh/setup-uv@v10.3.1'
     '.github/workflows/codeql.yml':
         - 'actions/checkout@v7.0.1'
         - 'github/codeql-action@v4.39.1'
@@ -17,7 +17,7 @@ workflows:
         - 'actions/checkout@v7.0.1'
         - 'actions/deploy-pages@v5.0.1'
         - 'actions/upload-pages-artifact@v5.0.0'
-        - 'astral-sh/setup-uv@v7.6.0'
+        - 'astral-sh/setup-uv@v10.3.1'
     '.github/workflows/release-please.yml':
         - 'googleapis/release-please-action@v5.0.0'
     '.github/workflows/release.yml':
@@ -26,7 +26,7 @@ workflows:
         - 'actions/download-artifact@v5.0.0'
         - 'actions/setup-node@v6.5.0'
         - 'actions/upload-artifact@v5.0.0'
-        - 'astral-sh/setup-uv@v7.6.0'
+        - 'astral-sh/setup-uv@v10.3.1'
         - 'docker/build-push-action@v7.4.0'
         - 'docker/login-action@v4.6.0'
         - 'docker/setup-buildx-action@v4.4.1'
@@ -92,9 +92,9 @@ dependencies:
         repo_id: 496012378
         uses:
             - 'actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f'
-    'astral-sh/setup-uv@v7.6.0':
-        ref: 'v7.6.0'
-        commit: 'sha1-37802adc94f370d6bfd71619e3f0bf239e1f3b78'
+    'astral-sh/setup-uv@v10.3.1':
+        ref: 'v10.3.1'
+        commit: 'sha1-18d369b23da25a81e9458561248e1aafff6a70fa'
         owner_id: 115962839
         repo_id: 846733598
     'docker/build-push-action@v7.4.0':
