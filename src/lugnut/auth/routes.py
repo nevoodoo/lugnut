@@ -43,6 +43,16 @@ class LoginIn(BaseModel):
     password: str = Field(max_length=1024)
 
 
+class PasswordIn(BaseModel):
+    current_password: str = Field(max_length=1024)
+    new_password: str = Field(min_length=1, max_length=1024)
+
+
+class UsernameIn(BaseModel):
+    current_password: str = Field(max_length=1024)
+    username: str = Field(min_length=1, max_length=64)
+
+
 class UserOut(BaseModel):
     id: int
     username: str
@@ -109,25 +119,69 @@ def setup(body: SetupIn, request: Request, response: Response, db: DB) -> UserOu
     return _start_session(request, response, db, user)
 
 
-@router.post("/auth/login")
-def login(body: LoginIn, request: Request, response: Response, db: DB) -> UserOut:
+def _check_password(
+    request: Request, db: DB, user: User | None, password: str, failure: HTTPException
+) -> None:
+    """Verify `password` (against a dummy hash when `user` is None) under the login limiter.
+
+    Raises `failure` on a mismatch; rehashes the stored hash if its parameters are stale.
+    """
     limiter = request.app.state.login_limiter
     ip = request.client.host if request.client else ""
     with _login_lock:
         if not limiter.allowed(ip):
             raise HTTPException(429, "Too many failed logins, try again later")
-        user = db.scalar(select(User).where(User.username == body.username))
         try:
-            _hasher.verify(user.password_hash if user else _DUMMY_HASH, body.password)
+            _hasher.verify(user.password_hash if user else _DUMMY_HASH, password)
             ok = user is not None
         except VerificationError:
             ok = False
         if not ok:
             limiter.failed(ip)
-            raise HTTPException(401, "Wrong username or password")
+            raise failure
         limiter.succeeded(ip)
     assert user is not None
+    if _hasher.check_needs_rehash(user.password_hash):
+        user.password_hash = _hasher.hash(password)  # committed by the caller
+
+
+def _wrong_current() -> HTTPException:
+    msg = "Current password is wrong"
+    return HTTPException(422, [{"loc": ["body", "current_password"], "msg": msg, "type": "value"}])
+
+
+def _cookie_only(request: Request) -> None:
+    if request.headers.get("authorization") is not None:
+        raise HTTPException(403, "Sign in with a password to change account details")
+
+
+@router.post("/auth/login")
+def login(body: LoginIn, request: Request, response: Response, db: DB) -> UserOut:
+    user = db.scalar(select(User).where(User.username == body.username))
+    bad = HTTPException(401, "Wrong username or password")
+    _check_password(request, db, user, body.password, bad)
+    assert user is not None
     return _start_session(request, response, db, user)
+
+
+@router.post("/auth/password", status_code=204)
+def change_password(body: PasswordIn, user: Writer, request: Request, db: DB) -> None:
+    _cookie_only(request)
+    _check_password(request, db, user, body.current_password, _wrong_current())
+    user.password_hash = _hasher.hash(body.new_password)
+    keep = hash_secret(request.cookies[COOKIE])
+    others = LoginSession.user_id == user.id, LoginSession.token_hash != keep
+    db.execute(delete(LoginSession).where(*others))
+    db.commit()
+
+
+@router.post("/auth/username")
+def change_username(body: UsernameIn, user: Writer, request: Request, db: DB) -> UserOut:
+    _cookie_only(request)
+    _check_password(request, db, user, body.current_password, _wrong_current())
+    user.username = body.username
+    db.commit()
+    return UserOut(id=user.id, username=user.username)
 
 
 @router.post("/auth/logout", status_code=204)

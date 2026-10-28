@@ -101,3 +101,25 @@ def test_expired_session_rejected(client, logged_in):
         db.execute(update(LoginSession).values(expires_at=utcnow() - timedelta(seconds=1)))
         db.commit()
     assert client.get("/api/auth/me").status_code == 401
+
+
+def test_password_change_ends_other_sessions(client, logged_in):
+    from fastapi.testclient import TestClient
+
+    _, token = _make_token(client, "write")
+    with TestClient(client.app) as second:
+        assert second.post("/api/auth/login", json=GOOD).status_code == 200
+        new = "a brand new passphrase"
+        body = {"current_password": GOOD["password"], "new_password": new}
+        r = client.post("/api/auth/password", json=body, headers=bearer(token))
+        assert r.status_code == 403
+        wrong = {**body, "current_password": "nope"}
+        r = client.post("/api/auth/password", json=wrong, headers=cookie_auth)
+        assert r.status_code == 422 and r.json()["detail"][0]["loc"] == ["body", "current_password"]
+        assert client.post("/api/auth/password", json=body, headers=cookie_auth).status_code == 204
+        assert second.get("/api/auth/me").status_code == 401
+        assert client.get("/api/auth/me").status_code == 200
+        assert client.get("/api/tokens", headers=bearer(token)).status_code == 200
+    fresh = TestClient(client.app)
+    assert fresh.post("/api/auth/login", json={**GOOD, "password": new}).status_code == 200
+    assert fresh.post("/api/auth/login", json=GOOD).status_code == 401

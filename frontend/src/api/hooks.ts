@@ -154,3 +154,15 @@ export function useLogout() {
     onSuccess: () => qc.setQueryData(["me"], null),
   });
 }
+
+export const useChangePassword = () =>
+  useMutation({
+    mutationFn: (body: S["PasswordIn"]) => api<void>("/auth/password", "POST", body),
+  });
+export function useChangeUsername() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: S["UsernameIn"]) => api<S["UserOut"]>("/auth/username", "POST", body),
+    onSuccess: (u) => qc.setQueryData(["me"], u),
+  });
+}
