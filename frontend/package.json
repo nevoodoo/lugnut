@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "lint": "eslint src",
-    "gen:api": "uv run python -m lugnut.openapi > openapi.json && openapi-typescript openapi.json -o src/api/schema.d.ts && rm openapi.json"
+    "gen:api": "uv run python -m lugnut.openapi > openapi.json && openapi-typescript openapi.json -o src/api/schema.d.ts && rm openapi.json",
+    "test": "vitest run"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.105.0",
@@ -25,6 +26,7 @@
     "openapi-typescript": "^7.13.0",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.72.1",
-    "vite": "^8.3.5"
+    "vite": "^8.3.5",
+    "vitest": "^5.0.5"
   }
 }

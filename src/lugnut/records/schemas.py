@@ -23,7 +23,7 @@ RecordType = Literal[
     "note",
 ]
 UNDATED = {"todo", "note"}
-SERVER_FIELDS = {"id", "vehicle_id", "created_at", "updated_at"}
+SERVER_FIELDS = {"id", "vehicle_id", "created_at", "updated_at", "attachments"}
 
 
 class LineItemFields(BaseModel):
@@ -176,12 +176,20 @@ class RecordIn(RecordFields):
         return DETAILS[t].model_validate(v) if t else v
 
 
+class AttachmentRef(BaseModel):
+    id: int
+    filename: str
+    content_type: str
+    size: int
+
+
 class RecordOut(RecordFields):
     id: int
     vehicle_id: int
     details: dict[str, Any]
     created_at: UtcDatetime
     updated_at: UtcDatetime
+    attachments: list[AttachmentRef] = Field(default_factory=list)
 
 
 def to_row_values(
@@ -215,6 +223,8 @@ def to_out(r: Record, install: InstallSettings) -> RecordOut:
         details["line_items"] = [
             LineItemOut.model_validate(li, from_attributes=True).model_dump() for li in r.line_items
         ]
-    common = {k: getattr(r, k) for k in RecordOut.model_fields if k not in ("odometer", "details")}
+    skip = ("odometer", "details", "attachments")
+    common = {k: getattr(r, k) for k in RecordOut.model_fields if k not in skip}
+    attachments = [AttachmentRef.model_validate(a, from_attributes=True) for a in r.attachments]
     odometer = None if r.odometer_km is None else km_to(r.odometer_km, unit)
-    return RecordOut(**common, odometer=odometer, details=details)
+    return RecordOut(**common, odometer=odometer, details=details, attachments=attachments)

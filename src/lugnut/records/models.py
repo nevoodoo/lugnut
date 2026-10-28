@@ -4,6 +4,7 @@ from typing import Any
 from sqlalchemy import JSON, ForeignKey, Index, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from lugnut.attachments.models import Attachment
 from lugnut.db import Base
 from lugnut.vehicles.models import Vehicle
 
@@ -59,4 +60,8 @@ class Record(Base):
     vehicle: Mapped[Vehicle] = relationship()
     line_items: Mapped[list[LineItem]] = relationship(
         order_by=LineItem.position, cascade="all, delete-orphan", passive_deletes=True
+    )
+    attachments: Mapped[list[Attachment]] = relationship(
+        order_by=Attachment.id,
+        viewonly=True,  # rows and files are managed by the attachments API
     )
