@@ -197,7 +197,7 @@ def test_commit_copies_record_files_and_rolls_back(client, data_dir, db_session,
         ],
     }
     plan = build_plan(cols, {"UseMPG": True}, {})
-    monkeypatch.setattr(routes, "_load_plan", lambda d, opts: plan)
+    monkeypatch.setattr(routes, "_load_plan", lambda *a: plan)
     token = "ab" * 16
     d = data_dir / "imports" / token
     (d / "documents").mkdir(parents=True)

@@ -98,7 +98,7 @@ def _import_dir(settings: Settings, token: str) -> str:
     return full
 
 
-def _load_plan(d: str, opts: ImportOptions) -> ImportPlan:
+def _load_plan(d: str, opts: ImportOptions, db: Session) -> ImportPlan:
     with open(os.path.join(d, "data", "cartracker.db"), "rb") as f:
         raw = f.read()
     try:
@@ -115,7 +115,9 @@ def _load_plan(d: str, opts: ImportOptions) -> ImportPlan:
             raise _bad_file("config/userConfig.json is not valid JSON") from None
         if not isinstance(config, dict):
             raise _bad_file("config/userConfig.json is not a JSON object")
-    return build_plan(cols, config, opts.model_dump(exclude_none=True, exclude={"vehicle_map"}))
+    options = opts.model_dump(exclude_none=True, exclude={"vehicle_map"})
+    options["install_timezone"] = get_install_settings(db).timezone
+    return build_plan(cols, config, options)
 
 
 def _check_map(db: Session, opts: ImportOptions) -> None:
@@ -244,7 +246,7 @@ def _extract_and_plan(settings: Settings, db: Session, src: BinaryIO) -> dict[st
     os.mkdir(d)
     try:
         archive.extract(src, d)
-        plan = _load_plan(d, ImportOptions())
+        plan = _load_plan(d, ImportOptions(), db)
     except archive.ArchiveError as e:
         shutil.rmtree(d, ignore_errors=True)
         if e.status == 413:
@@ -262,7 +264,7 @@ def preview_backup(
 ) -> dict[str, Any]:
     d = _import_dir(request.app.state.settings, token)
     _check_map(db, body)
-    return _preview(db, token, _load_plan(d, body), body.vehicle_map)
+    return _preview(db, token, _load_plan(d, body, db), body.vehicle_map)
 
 
 @router.post("/{token}/commit")
@@ -279,7 +281,7 @@ def commit_backup(
         raise HTTPException(409, "This backup is already being imported") from None
     staged: list[str] = []  # files copied into storage, removed again if the commit fails
     try:
-        plan = _load_plan(work, body)
+        plan = _load_plan(work, body, db)
         result = _Commit(db, settings, work, plan, staged, body.vehicle_map).run()
         db.commit()
     except BaseException:

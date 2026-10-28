@@ -3,10 +3,10 @@
 import calendar
 import re
 from dataclasses import dataclass, field
-from datetime import UTC, date, datetime, time
+from datetime import date, datetime, time
 from decimal import ROUND_HALF_UP, Decimal
 from typing import Any
-from zoneinfo import ZoneInfo
+from zoneinfo import ZoneInfo, available_timezones
 
 Doc = dict[str, Any]
 
@@ -117,17 +117,28 @@ def parse_locale_date(s: Any, order: str) -> date | None:
         return None
 
 
-def guess_timezone(times: list[datetime]) -> str:
-    tods = {t.astimezone(UTC).time() for t in times}
-    if len(tods) != 1:
-        return "UTC"
-    (t,) = tods
-    if t.minute or t.second or t.microsecond or t.hour == 0:
-        return "UTC"
-    # Server midnight lands on this UTC hour, so the server is that many hours behind UTC
-    # (or ahead, past 12). Etc/GMT signs are inverted.
-    off = t.hour if t.hour <= 12 else t.hour - 24
-    return "UTC" if off == 0 else f"Etc/GMT{'+' if off > 0 else '-'}{abs(off)}"
+def _midnight_in(times: list[datetime], zone: str) -> bool:
+    z = ZoneInfo(zone)
+    return all(t.astimezone(z).time() == time() for t in times)
+
+
+def guess_timezone(times: list[datetime], install_tz: str | None = None) -> tuple[str, str | None]:
+    """The zone where every stored time is local midnight, and a warning if it's a guess.
+
+    LubeLogger stores local midnight as UTC, so the server's zone is one where they all land on
+    00:00: UTC, else the install's own zone, else the first named zone that fits."""
+    times = times[:500]
+    if _midnight_in(times, "UTC"):
+        return "UTC", None
+    if install_tz and _midnight_in(times, install_tz):
+        return install_tz, None
+    for name in sorted(available_timezones()):
+        if "/" in name and not name.startswith("Etc/") and _midnight_in(times, name):
+            return name, f"Dates fit {name}. Check this is where LubeLogger ran."
+    return "UTC", (
+        "Dates in this backup don't line up with UTC. Set the timezone LubeLogger ran in,"
+        " or some dates may be a day out."
+    )
 
 
 class _Mapper:
@@ -180,12 +191,9 @@ class _Mapper:
             for r in self.cols.get(k, [])
             if self._real(r.get("Date"))
         ]
-        tz = guess_timezone(times) if times else "UTC"
-        if tz == "UTC" and any(t.astimezone(UTC).time() != time() for t in times):
-            self.warn(
-                "Dates in this backup don't line up with UTC. Set the timezone LubeLogger ran"
-                " in, or some dates may be a day out."
-            )
+        tz, warning = guess_timezone(times, self.options.get("install_timezone"))
+        if warning:
+            self.warn(warning)
         return tz
 
     def _guess_order(self) -> str:

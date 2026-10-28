@@ -18,6 +18,7 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("zip")
     ap.add_argument("--tz", dest="source_timezone")
+    ap.add_argument("--install-tz", dest="install_timezone")
     ap.add_argument("--date-order", choices=("DMY", "MDY", "YMD"))
     args = ap.parse_args()
     with zipfile.ZipFile(args.zip) as zf:

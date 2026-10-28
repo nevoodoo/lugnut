@@ -1,5 +1,6 @@
 import json
 import zipfile
+from datetime import UTC, datetime
 from pathlib import Path
 
 from lugnut.lubelogger.litedb import read_collections
@@ -47,3 +48,15 @@ def test_plan_maps_demo_backup():
     assert plan.guesses["source_timezone"] == "UTC"
     # the demo's times sit at 00:00, 06:00 and 07:00 UTC: no single offset fits
     assert any(w.startswith("Dates in this backup don't line up with UTC") for w in plan.warnings)
+    # Sydney local midnight is 13:00Z in summer and 14:00Z in winter (DST ends 2020-04-05)
+    syd = [datetime(2020, 3, 1, 13, tzinfo=UTC), datetime(2020, 5, 1, 14, tzinfo=UTC)]
+    small = {
+        "vehicles": [{"_id": 1, "Year": 2010, "Make": "Ford", "Model": "Falcon"}],
+        "odometerrecords": [
+            {"_id": i, "VehicleId": 1, "Date": d, "Mileage": 100 * i} for i, d in enumerate(syd, 1)
+        ],
+    }
+    p = build_plan(small, {}, {"install_timezone": "Australia/Sydney"})
+    assert p.guesses["source_timezone"] == "Australia/Sydney"
+    assert not [w for w in p.warnings if "Dates" in w]
+    assert [str(r["date"]) for r in p.vehicles[0].records] == ["2020-03-02", "2020-05-02"]
