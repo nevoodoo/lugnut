@@ -18,6 +18,7 @@ class Reminder(Base):
         ),
         Index(
             "ux_reminder_source",
+            "vehicle_id",
             "source",
             "source_id",
             unique=True,

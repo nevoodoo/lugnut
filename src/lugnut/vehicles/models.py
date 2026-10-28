@@ -9,13 +9,7 @@ from lugnut.db import Base
 class Vehicle(Base):
     __tablename__ = "vehicle"
     __table_args__ = (
-        Index(
-            "ux_vehicle_source",
-            "source",
-            "source_id",
-            unique=True,
-            sqlite_where=text("source IS NOT NULL"),
-        ),
+        Index("ix_vehicle_source", "source", "source_id", sqlite_where=text("source IS NOT NULL")),
     )
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str]

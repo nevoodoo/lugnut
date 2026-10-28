@@ -15,7 +15,6 @@ from fastapi import APIRouter, HTTPException, Request, UploadFile
 from fastapi.exceptions import RequestValidationError
 from pydantic import BaseModel, ConfigDict, ValidationError, field_validator
 from sqlalchemy import select
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from lugnut.attachments import storage
@@ -168,21 +167,27 @@ def commit_backup(
 ) -> dict[str, Any]:
     settings: Settings = request.app.state.settings
     d = _import_dir(settings, token)
-    plan = _load_plan(d, body)
+    work = d + ".committing"
+    try:
+        os.rename(d, work)  # claims the upload, so a second commit of it gets a 409
+    except OSError:
+        raise HTTPException(409, "This backup is already being imported") from None
     staged: list[str] = []  # files copied into storage, removed again if the commit fails
     try:
-        result = _Commit(db, settings, d, plan, staged).run()
+        plan = _load_plan(work, body)
+        result = _Commit(db, settings, work, plan, staged).run()
         db.commit()
-    except IntegrityError:
-        db.rollback()
-        storage.delete_many(settings, staged)
-        raise HTTPException(409, "This backup is already being imported") from None
     except BaseException:
         db.rollback()
         storage.delete_many(settings, staged)
+        os.rename(work, d)  # leave it for a retry
         raise
-    shutil.rmtree(d, ignore_errors=True)
+    shutil.rmtree(work, ignore_errors=True)
     return result
+
+
+def _norm(v: Any) -> str:
+    return "".join(str(v or "").split()).upper()
 
 
 class _Commit:
@@ -231,16 +236,25 @@ class _Commit:
         self.created["attachments"] += 1
         return a
 
+    def match_vehicle(self, source_id: str, planned: dict[str, Any]) -> Vehicle | None:
+        """A vehicle imported earlier with this source_id that is the same car.
+
+        source_id alone isn't enough: ids restart at 1 in every LubeLogger install. The car is the
+        same when the plate or VIN matches; with neither on both sides, source_id decides."""
+        rows = self.db.scalars(
+            select(Vehicle).where(Vehicle.source == SOURCE, Vehicle.source_id == source_id)
+        )
+        for v in rows:
+            pairs = [(_norm(getattr(v, k)), _norm(planned.get(k))) for k in ("plate", "vin")]
+            compared = [a == b for a, b in pairs if a and b]
+            if not compared or any(compared):
+                return v
+        return None
+
     def run(self) -> dict[str, Any]:
         db = self.db
-        seen_records = set(db.scalars(select(Record.source_id).where(Record.source == SOURCE)))
-        seen_reminders = set(
-            db.scalars(select(Reminder.source_id).where(Reminder.source == SOURCE))
-        )
         for pv in self.plan.vehicles:
-            v = db.scalar(
-                select(Vehicle).where(Vehicle.source == SOURCE, Vehicle.source_id == pv.source_id)
-            )
+            v = self.match_vehicle(pv.source_id, pv.vehicle)
             if v is not None:
                 self.existing["vehicles"] += 1
             else:
@@ -261,6 +275,21 @@ class _Commit:
                     elif photo is not None:
                         self.warn(f"{pv.vehicle['name']}: photo is not an image; kept as a file")
             unit = pv.vehicle["distance_unit"]  # the plan's distances are in this unit
+            # LubeLogger ids restart in every install, so "already imported" is per vehicle
+            seen_records = set(
+                db.scalars(
+                    select(Record.source_id).where(
+                        Record.vehicle_id == v.id, Record.source == SOURCE
+                    )
+                )
+            )
+            seen_reminders = set(
+                db.scalars(
+                    select(Reminder.source_id).where(
+                        Reminder.vehicle_id == v.id, Reminder.source == SOURCE
+                    )
+                )
+            )
             for rec in pv.records:
                 sid = rec["source_id"]
                 if sid in seen_records:

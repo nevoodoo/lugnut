@@ -58,6 +58,17 @@ def edit_first_record_title(client, title):
     assert res.status_code == 200, res.text
 
 
+def demo_with_plate(plate: bytes) -> bytes:
+    buf = io.BytesIO()
+    with zipfile.ZipFile(FIXTURE) as src, zipfile.ZipFile(buf, "w") as out:
+        for info in src.infolist():
+            data = src.read(info)
+            if info.filename == "data/cartracker.db":
+                data = data.replace(b"MOMWAGON", plate)  # same length, so the BSON stays valid
+            out.writestr(info, data)
+    return buf.getvalue()
+
+
 def zip_with_member(name: str, data: bytes) -> bytes:
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
@@ -86,6 +97,10 @@ def test_second_import_adds_nothing(client):
     edit_first_record_title(client, "Mine")
     res = commit_demo(client)
     assert sum(res["created"].values()) == 0 and first_record_title(client) == "Mine"
+    # same LubeLogger ids, different car: a backup from another install
+    tok = upload(client, demo_with_plate(b"OTHERCAR")).json()["token"]
+    res = client.post(f"/api/import/lubelogger/{tok}/commit", json={}, headers=CSRF).json()
+    assert res["created"]["vehicles"] == 1 and res["created"]["records"] == 291
 
 
 def test_malicious_zip_rejected(client, data_dir):
