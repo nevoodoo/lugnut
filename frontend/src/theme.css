@@ -1056,3 +1056,11 @@ a.rec:hover .rec-title {
   border-radius: 8px;
   background: var(--paper);
 }
+.source {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.source p {
+  margin: 0;
+}

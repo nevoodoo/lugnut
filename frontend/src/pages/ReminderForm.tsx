@@ -119,7 +119,7 @@ function Body({ reminder: r, vehicle, s }: { reminder?: Reminder; vehicle: Vehic
         <h1 className="form-title">{r ? "Edit reminder" : "New reminder"}</h1>
       </div>
       {expiry && r && (
-        <div className="card">
+        <div className="card source">
           <SourceLink r={r} s={s} />
           <p className="muted">The due date comes from that record. Change it there.</p>
         </div>

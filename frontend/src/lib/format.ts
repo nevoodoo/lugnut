@@ -60,9 +60,11 @@ export function parseNumber(text: string): number | null | "invalid" {
   return Number.isFinite(n) ? n : "invalid";
 }
 
-// Today's date as YYYY-MM-DD in the install timezone (en-CA formats dates that way).
-export const today = (timezone: string): string =>
-  new Intl.DateTimeFormat("en-CA", { timeZone: timezone }).format(new Date());
+// A moment as YYYY-MM-DD in the install timezone (en-CA formats dates that way).
+export const dateInZone = (when: Date | string, timezone: string): string =>
+  new Intl.DateTimeFormat("en-CA", { timeZone: timezone }).format(new Date(when));
+
+export const today = (timezone: string): string => dateInZone(new Date(), timezone);
 
 // A line item's cost is per unit; a blank quantity counts as one. Result is in minor units.
 export const lineItemsTotal = (items: { cost: number | null; quantity: number | null }[]): number =>

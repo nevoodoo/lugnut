@@ -1,10 +1,10 @@
 import { Check } from "lucide-react";
-import { useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { Link } from "react-router";
 import { ApiError } from "../api/client";
 import { useCompleteReminder, type Reminder } from "../api/hooks";
 import { fieldErrors } from "../lib/errors";
-import { formatDate, formatDistance, parseNumber, today, type InstallSettings } from "../lib/format";
+import { dateInZone, formatDate, formatDistance, parseNumber, today, type InstallSettings } from "../lib/format";
 import { DateInput } from "./DateInput";
 import { NumberInput } from "./NumberInput";
 import { Stamp } from "./Stamp";
@@ -21,6 +21,8 @@ function DonePanel({ r, s, onClose }: { r: Reminder; s: InstallSettings; onClose
   const [odo, setOdo] = useState("");
   const [errs, setErrs] = useState<Record<string, string>>({});
   const unit = r.distance_unit_effective;
+  const form = useRef<HTMLFormElement>(null);
+  useEffect(() => form.current?.querySelector("input")?.focus(), []);
 
   function submit(e: FormEvent) {
     e.preventDefault();
@@ -37,7 +39,7 @@ function DonePanel({ r, s, onClose }: { r: Reminder; s: InstallSettings; onClose
   }
 
   return (
-    <form className="done-panel" onSubmit={submit} noValidate aria-label={`Mark ${r.title} done`}>
+    <form ref={form} className="done-panel" onSubmit={submit} onKeyDown={(e) => e.key === "Escape" && onClose()} noValidate aria-label={`Mark ${r.title} done`}>
       <div className="pair">
         <DateInput label="Done on" value={date} onChange={setDate} error={errs.date} />
         <NumberInput label="Odometer (optional)" value={odo} onChange={setOdo} error={errs.odometer} hint={`In ${unit}`} />
@@ -62,6 +64,11 @@ function DonePanel({ r, s, onClose }: { r: Reminder; s: InstallSettings; onClose
 // One reminder: title (opens the form), what it's due by, state stamp, and an inline Done panel.
 export function ReminderRow({ r, s, plate }: { r: Reminder; s: InstallSettings; plate?: ReactNode }) {
   const [open, setOpen] = useState(false);
+  const btn = useRef<HTMLButtonElement>(null);
+  const close = () => {
+    setOpen(false);
+    btn.current?.focus();
+  };
   const doneAt = r.completed_at;
   const done = doneAt !== null;
   return (
@@ -74,14 +81,14 @@ export function ReminderRow({ r, s, plate }: { r: Reminder; s: InstallSettings; 
       </div>
       <div className="rem-sub">
         {plate}
-        {done ? <span className="muted">Completed {formatDate(doneAt?.slice(0, 10) ?? null, s)}</span> : null}
+        {done ? <span className="muted">Completed {formatDate(doneAt ? dateInZone(doneAt, s.timezone) : null, s)}</span> : null}
         {!done && (
-          <button type="button" className="btn small" aria-expanded={open} onClick={() => setOpen(!open)}>
+          <button ref={btn} type="button" className="btn small" aria-expanded={open} onClick={() => setOpen(!open)}>
             <Check size={16} aria-hidden="true" /> Done
           </button>
         )}
       </div>
-      {open && <DonePanel r={r} s={s} onClose={() => setOpen(false)} />}
+      {open && <DonePanel r={r} s={s} onClose={close} />}
     </li>
   );
 }
