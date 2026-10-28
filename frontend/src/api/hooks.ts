@@ -39,7 +39,9 @@ const useGet = <T>(key: QueryKey, path: string, enabled = true) =>
 // ---- queries ----
 export const useSettings = () => useGet<Settings>(["settings"], "/settings");
 export const useRegions = () => useGet<Record<string, unknown>[]>(["regions"], "/regions");
-export const useVehicles = () => useGet<Vehicle[]>(["vehicles"], "/vehicles");
+// The API returns only archived vehicles when archived=true, so the two lists are separate queries.
+export const useVehicles = (archived = false) =>
+  useGet<Vehicle[]>(archived ? ["vehicles", "archived"] : ["vehicles"], `/vehicles${archived ? "?archived=true" : ""}`);
 export const useVehicle = (id: number) => useGet<Vehicle>(["vehicles", id], `/vehicles/${id}`);
 export const useRecords = (vehicleId: number, filters: RecordFilters = {}) =>
   useGet<LugnutRecord[]>(["records", vehicleId, filters], `/vehicles/${vehicleId}/records${qs(filters)}`);

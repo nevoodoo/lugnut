@@ -70,12 +70,6 @@ export function VehicleHome() {
   const subtitle = [v.year, [v.make, v.model].filter(Boolean).join(" "), v.fuel_type].filter(Boolean).join(" · ");
   const hasPhoto = v.photo_attachment_id !== null;
   const caption = v.purchase_date ? `Bought ${formatDate(v.purchase_date, s)}` : "";
-  const title = (
-    <>
-      <div className="label">{subtitle}</div>
-      <h1>{v.name}</h1>
-    </>
-  );
 
   return (
     <div className="vh">
@@ -93,7 +87,8 @@ export function VehicleHome() {
         </figure>
         <div className="vh-info">
           <div className={hasPhoto ? "vh-title hide-narrow" : "vh-title"}>
-            {title}
+            <div className="label">{subtitle}</div>
+            <h1>{v.name}</h1>
             <PlateBadge plate={v.plate} />
           </div>
           <OdometerBlock value={v.current_odometer} unit={unit} />

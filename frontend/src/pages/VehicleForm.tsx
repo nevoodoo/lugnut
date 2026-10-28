@@ -1,5 +1,5 @@
 import { Plus, Trash2 } from "lucide-react";
-import { useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router";
 import { ApiError } from "../api/client";
 import { useDeleteVehicle, useSaveVehicle, useSettings, useVehicle, type Vehicle, type VehicleIn } from "../api/hooks";
@@ -53,6 +53,11 @@ function VehicleFormBody(props: { id?: number; vehicle?: Vehicle; currency: stri
   const [errs, setErrs] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState("");
   const [confirming, setConfirming] = useState(false);
+  const [delError, setDelError] = useState("");
+  const confirmRef = useRef<HTMLParagraphElement>(null);
+  useEffect(() => {
+    if (confirming) confirmRef.current?.focus();
+  }, [confirming]);
   const set = (k: string) => (e: { target: { value: string } }) => setF((p) => ({ ...p, [k]: e.target.value }));
 
   function onSubmit(e: FormEvent) {
@@ -68,6 +73,13 @@ function VehicleFormBody(props: { id?: number; vehicle?: Vehicle; currency: stri
     if (!Number.isFinite(adj)) local.odometer_adjustment = "Enter a number";
     const year = blank(f.year);
     if (year !== null && !/^\d{4}$/.test(year)) local.year = "Enter a four digit year";
+    const seen = new Set<string>();
+    custom.forEach(([k], i) => {
+      const name = k.trim();
+      if (!name) local[`custom.${i}`] = "Give this field a name or remove it";
+      else if (seen.has(name)) local[`custom.${i}`] = "Another field already has this name";
+      seen.add(name);
+    });
     if (Object.keys(local).length) return setErrs(local);
 
     const body = {
@@ -86,7 +98,7 @@ function VehicleFormBody(props: { id?: number; vehicle?: Vehicle; currency: stri
       sold_date: blank(f.sold_date),
       sold_price: money.sold_price,
       odometer_adjustment: adj,
-      custom_fields: Object.fromEntries(custom.filter(([k]) => k.trim()).map(([k, v]) => [k.trim(), v])),
+      custom_fields: Object.fromEntries(custom.map(([k, v]) => [k.trim(), v])),
       archived: !!f.archived,
     } satisfies VehicleIn;
     setErrs({});
@@ -159,7 +171,7 @@ function VehicleFormBody(props: { id?: number; vehicle?: Vehicle; currency: stri
       <Group title="Custom fields">
         {custom.map(([k, v], i) => (
           <div key={i} className="kv">
-            <Field label="Name" error={errs[`custom_fields.${k}`]}>
+            <Field label="Name" error={errs[`custom.${i}`] ?? errs[`custom_fields.${k}`]}>
               {(a) => <input {...a} value={k} onChange={(e) => setCustom(custom.map((p, j) => (j === i ? [e.target.value, p[1]] : p)))} />}
             </Field>
             <Field label="Value">
@@ -200,13 +212,13 @@ function VehicleFormBody(props: { id?: number; vehicle?: Vehicle; currency: stri
         <div className="danger card">
           {confirming ? (
             <>
-              <p role="alert">Delete {vehicle?.name}? Its records and files will be deleted too. This can't be undone.</p>
+              <p ref={confirmRef} tabIndex={-1} role="alert">Delete {vehicle?.name}? Its records and files will be deleted too. This can't be undone.</p>
               <div className="actions">
                 <button
                   type="button"
                   className="btn danger-btn"
                   disabled={del.isPending}
-                  onClick={() => del.mutate(id, { onSuccess: () => nav("/garage"), onError: (e) => setFormError(e.message) })}
+                  onClick={() => del.mutate(id, { onSuccess: () => nav("/garage"), onError: (e) => setDelError(e.message) })}
                 >
                   Yes, delete
                 </button>
@@ -214,6 +226,11 @@ function VehicleFormBody(props: { id?: number; vehicle?: Vehicle; currency: stri
                   Keep it
                 </button>
               </div>
+              {delError && (
+                <p className="error" role="alert">
+                  {delError}
+                </p>
+              )}
             </>
           ) : (
             <button type="button" className="btn danger-btn" onClick={() => setConfirming(true)}>

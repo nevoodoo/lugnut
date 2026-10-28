@@ -504,9 +504,16 @@ progress {
 .vh-title h1 {
   font-size: 1.75rem;
 }
-.vh-photo figcaption,
-.vh-title.hide-narrow {
+.vh-photo figcaption {
   display: none;
+}
+/* Hidden visually on phones (the hero shows the name) but still the page heading. */
+.vh-title.hide-narrow {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
 }
 .vh-photo:not(.has-photo) {
   display: none;
@@ -576,6 +583,9 @@ progress {
   gap: 0.5rem;
   align-items: end;
 }
+.muted {
+  color: var(--muted);
+}
 .check {
   display: flex;
   align-items: center;
@@ -604,7 +614,11 @@ progress {
 
 @media (min-width: 900px) {
   .vh-title.hide-narrow {
-    display: flex;
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip-path: none;
   }
   .vh-top {
     flex-direction: row;
