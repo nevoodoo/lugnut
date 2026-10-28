@@ -18,6 +18,7 @@ from lugnut.records.schemas import (
     to_out,
     to_row_values,
 )
+from lugnut.reminders.expiry import sync_expiry
 from lugnut.settings_api import get_install_settings
 from lugnut.vehicles.models import Vehicle
 
@@ -94,6 +95,8 @@ def create_record(vehicle_id: int, body: RecordIn, _: Writer, db: DB) -> RecordO
         updated_at=now,
     )
     db.add(r)
+    db.flush()
+    sync_expiry(db, vehicle_id, r.type)
     db.commit()
     return to_out(r, install)
 
@@ -108,10 +111,14 @@ def replace_record(record_id: int, body: RecordIn, _: Writer, db: DB) -> RecordO
     r = _get(db, record_id)
     _check_job_types(db, body)
     install = get_install_settings(db)
+    old_type = r.type
     for k, val in to_row_values(body, install, r.vehicle.distance_unit).items():
         setattr(r, k, val)
     r.line_items = to_line_items(body)
     r.updated_at = utcnow()
+    db.flush()
+    for t in {old_type, r.type}:
+        sync_expiry(db, r.vehicle_id, t)
     db.commit()
     return to_out(r, install)
 
@@ -121,6 +128,9 @@ def delete_record(record_id: int, request: Request, _: Writer, db: DB) -> None:
     r = _get(db, record_id)
     # ponytail: an upload landing between select and delete is orphaned on disk; sweep if it matters
     names = list(db.scalars(select(Attachment.stored_name).where(Attachment.record_id == r.id)))
+    vehicle_id, rtype = r.vehicle_id, r.type
     db.delete(r)
+    db.flush()
+    sync_expiry(db, vehicle_id, rtype)
     db.commit()
     storage.delete_many(request.app.state.settings, names)
