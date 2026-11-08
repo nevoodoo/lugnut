@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.0-rc.4](https://github.com/nevoodoo/lugnut/compare/v0.1.0-rc.3...v0.1.0-rc.4) (2026-11-08)
+
+
+### Features
+
+* add an MCP server so AI assistants can read and log records ([#32](https://github.com/nevoodoo/lugnut/issues/32)) ([062929a](https://github.com/nevoodoo/lugnut/commit/062929ad84ec6261f773eac1c781514c70e0f26e))
+
+
+### Bug fixes
+
+* make lugnut-update see new releases straight away ([#34](https://github.com/nevoodoo/lugnut/issues/34)) ([176970b](https://github.com/nevoodoo/lugnut/commit/176970ba7c3c7cb0d7d4fa4d0798225ce9211712))
+
 ## [0.1.0-rc.3](https://github.com/nevoodoo/lugnut/compare/v0.1.0-rc.2...v0.1.0-rc.3) (2026-11-08)
 
 
