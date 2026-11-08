@@ -55,7 +55,7 @@ def build_mcp(app: FastAPI) -> "Endpoint":
 
     @server.tool()
     async def list_vehicles(ctx: Context, archived: bool = False) -> list[Obj]:
-        """List vehicles (active ones unless archived is true)."""
+        """List active vehicles, or only archived ones when archived is true."""
         return await _api(ctx, "GET", "/api/vehicles", params={"archived": archived})
 
     @server.tool()

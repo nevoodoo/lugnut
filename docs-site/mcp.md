@@ -41,7 +41,7 @@ Most clients take a JSON config along these lines. The exact file and key names 
 
 | Tool | Needs | What it does |
 | --- | --- | --- |
-| `list_vehicles` | read | Lists vehicles, active ones unless you ask for archived. |
+| `list_vehicles` | read | Lists active vehicles, or only archived ones if asked. |
 | `get_vehicle` | read | Gets one vehicle, including its current odometer. |
 | `list_records` | read | Lists a vehicle's records, newest first, by type and date range. |
 | `get_record` | read | Gets one record. |
