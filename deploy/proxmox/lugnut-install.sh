@@ -129,9 +129,9 @@ export UV_PYTHON_INSTALL_DIR=/opt/lugnut/python
 if [[ -n "${LUGNUT_SOURCE:-}" ]]; then
   uv tool install --force --python 3.13 "$LUGNUT_SOURCE"
 elif [[ -n "${LUGNUT_VERSION:-}" ]]; then
-  uv tool install --force --python 3.13 "lugnut==$LUGNUT_VERSION"
+  uv tool install --force --refresh-package lugnut --python 3.13 "lugnut==$LUGNUT_VERSION"
 else
-  uv tool upgrade lugnut
+  uv tool upgrade --refresh-package lugnut lugnut
 fi
 
 port=8080
