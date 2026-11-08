@@ -13,6 +13,10 @@ updates:
     directory: /frontend
     schedule:
       interval: weekly
+    ignore:
+      # typescript-eslint doesn't support TypeScript 7 yet, so majors are moved by hand.
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
     cooldown:
       default-days: 7
     groups:
