@@ -15,6 +15,7 @@ nav = [
     { "Proxmox" = "install/proxmox.md" },
   ] },
   { "Insights" = "insights.md" },
+  { "AI assistants" = "mcp.md" },
   { "Coming from LubeLogger" = "coming-from-lubelogger.md" },
   { "Roadmap" = "roadmap.md" },
   { "Release notes" = "release-notes.md" },

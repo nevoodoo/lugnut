@@ -12,7 +12,7 @@ Lugnut is built in milestones, in the order below. Each milestone lands on `main
 | 4 | App screens | The phone and desktop screens for vehicles, records, fuel entry, reminders, documents and settings. Installable to the home screen. | In progress |
 | 5 | Insights | Fuel consumption over time, how often each kind of repair comes back, jobs that fall due close together, cost per km and total cost of ownership. | Done, unreleased |
 | 6 | LubeLogger import | An [import from LubeLogger](coming-from-lubelogger.md) from a backup zip, with a preview you can correct before saving. | Done, unreleased |
-| 7 | MCP server | Lets AI assistants read and write your vehicle data with an API token. | Planned |
+| 7 | MCP server | Lets AI assistants read and write your vehicle data with an API token. | Done, unreleased |
 | 8 | Version 1.0 | A Proxmox LXC script for installing and updating. A release candidate first, then 1.0. Docs for each release. | Planned |
 
 Records use these types: work done (service, repair or upgrade), fuel, odometer, registration, insurance, inspection, tolls, parking, fines, to-do items and notes. The odometer is optional on every record. Australia is the first region, with the United States and the United Kingdom alongside it. Each region is a small data file, so adding a country needs no code.
