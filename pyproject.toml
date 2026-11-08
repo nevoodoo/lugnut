@@ -1,6 +1,6 @@
 [project]
 name = "lugnut"
-version = "0.1.0-rc.2"
+version = "0.1.0-rc.3"
 description = "Self-hosted vehicle maintenance tracker"
 readme = "README.md"
 license = "MIT"
