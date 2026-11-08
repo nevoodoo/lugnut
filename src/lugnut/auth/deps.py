@@ -51,11 +51,16 @@ def _unauthorized() -> HTTPException:
     return HTTPException(401, "Not authenticated", headers={"WWW-Authenticate": "Bearer"})
 
 
-def _token_user(request: Request, db: Session, header: str, scope: Scope) -> User:
+def bearer_token(db: Session, header: str) -> ApiToken | None:
+    """The API token an Authorization header names, or None if missing or unknown."""
     kind, _, value = header.partition(" ")
     if kind.lower() != "bearer" or not value:
-        raise _unauthorized()
-    token = db.scalar(select(ApiToken).where(ApiToken.token_hash == hash_secret(value.strip())))
+        return None
+    return db.scalar(select(ApiToken).where(ApiToken.token_hash == hash_secret(value.strip())))
+
+
+def _token_user(request: Request, db: Session, header: str, scope: Scope) -> User:
+    token = bearer_token(db, header)
     if token is None:
         raise _unauthorized()
     if token.scope != "write" and (scope == "write" or request.method not in SAFE_METHODS):

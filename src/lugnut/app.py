@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 from importlib.metadata import version
 
 from fastapi import FastAPI
+from starlette.routing import Route
 
 from lugnut.attachments.routes import router as attachments_router
 from lugnut.auth.ratelimit import LoginLimiter
@@ -14,6 +15,7 @@ from lugnut.db import get_engine
 from lugnut.insights.routes import router as insights_router
 from lugnut.lubelogger.routes import router as lubelogger_router
 from lugnut.lubelogger.routes import sweep_imports
+from lugnut.mcp.server import build_mcp
 from lugnut.migrate import upgrade_database
 from lugnut.records.job_types import router as job_types_router
 from lugnut.records.routes import router as records_router
@@ -38,7 +40,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 reminder_loop(_app.state.engine, settings.reminder_interval_seconds)
             )
         try:
-            yield
+            async with mcp.run():
+                yield
         finally:
             if loop:
                 loop.cancel()
@@ -65,5 +68,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def health() -> dict[str, str]:
         return {"status": "ok", "version": version("lugnut")}
 
+    mcp = build_mcp(app)
+    app.router.routes.append(Route("/mcp", mcp))  # exact path, so no /mcp/ redirect
     mount_frontend(app)  # last, so its catch-all never shadows /api routes
     return app
