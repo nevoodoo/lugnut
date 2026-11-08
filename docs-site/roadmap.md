@@ -10,7 +10,7 @@ Lugnut is built in milestones, in the order below. Each milestone lands on `main
 | 2 | Vehicles and records | Vehicles with photos, purchase and sale details and custom fields. Records with their own fields for each type, line items with job types, estimates and attachments. Region settings for terms, units, currency and date format. All of it through the API. | Done, unreleased |
 | 3 | Reminders | Reminders by date, distance or both, with repeats. Registration, insurance and inspection expiry dates create reminders on their own. Due items show in the app and can go to a Discord webhook. | Done, unreleased |
 | 4 | App screens | The phone and desktop screens for vehicles, records, fuel entry, reminders, documents and settings. Installable to the home screen. | In progress |
-| 5 | Insights | Fuel consumption over time, how often each kind of repair comes back, jobs that fall due close together, cost per km and total cost of ownership. | Planned |
+| 5 | Insights | Fuel consumption over time, how often each kind of repair comes back, jobs that fall due close together, cost per km and total cost of ownership. | Done, unreleased |
 | 6 | LubeLogger import | An [import from LubeLogger](coming-from-lubelogger.md) from a backup zip, with a preview you can correct before saving. | Done, unreleased |
 | 7 | MCP server | Lets AI assistants read and write your vehicle data with an API token. | Planned |
 | 8 | Version 1.0 | A Proxmox LXC script for installing and updating. A release candidate first, then 1.0. Docs for each release. | Planned |

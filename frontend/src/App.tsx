@@ -4,6 +4,7 @@ import { api, ApiError, type User } from "./api/client";
 import { Shell } from "./app/Shell";
 import { Documents } from "./pages/Documents";
 import { Garage } from "./pages/Garage";
+import { Insights } from "./pages/Insights";
 import { ImportLubeLogger } from "./pages/ImportLubeLogger";
 import { HomeRedirect } from "./pages/HomeRedirect";
 import { Login } from "./pages/Login";
@@ -47,6 +48,7 @@ export function App() {
         <Route path="vehicles/:id" element={<VehicleHome />} />
         <Route path="vehicles/:id/edit" element={<VehicleForm />} />
         <Route path="vehicles/:id/records" element={<Records />} />
+        <Route path="vehicles/:id/insights" element={<Insights />} />
         <Route path="vehicles/:id/records/new" element={<RecordForm />} />
         <Route path="vehicles/:id/fuel" element={<QuickFuel />} />
         <Route path="vehicles/:id/reminders/new" element={<ReminderForm />} />

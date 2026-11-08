@@ -460,6 +460,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/vehicles/{vehicle_id}/insights": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Insights */
+        get: operations["get_insights_api_vehicles__vehicle_id__insights_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/import/lubelogger": {
         parameters: {
             query?: never;
@@ -576,10 +593,40 @@ export interface components {
             /** Odometer */
             odometer?: number | null;
         };
+        /** CostSummaryOut */
+        CostSummaryOut: {
+            /** Total */
+            total: number;
+            /** By Category */
+            by_category: {
+                [key: string]: number;
+            };
+            /** Distance */
+            distance: number | null;
+            /** Per Distance */
+            per_distance: number | null;
+            /** Missing */
+            missing: string[];
+        };
         /** DiscordIn */
         DiscordIn: {
             /** Url */
             url?: string | null;
+        };
+        /** EconomyOut */
+        EconomyOut: {
+            /** Average */
+            average: number | null;
+            /** Recent */
+            recent: number | null;
+            /** Change Pct */
+            change_pct: number | null;
+            /** Segments */
+            segments: components["schemas"]["SegmentOut"][];
+            /** Skipped */
+            skipped: number;
+            /** Missing */
+            missing: string[];
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -607,6 +654,35 @@ export interface components {
                 [key: string]: number | "new";
             };
         };
+        /** InsightsOut */
+        InsightsOut: {
+            /** Currency */
+            currency: string;
+            /**
+             * Distance Unit
+             * @enum {string}
+             */
+            distance_unit: "km" | "mi";
+            /**
+             * Economy Unit
+             * @enum {string}
+             */
+            economy_unit: "L/100km" | "mpg" | "mpg (imp)";
+            /** Lower Is Better */
+            lower_is_better: boolean;
+            this_year: components["schemas"]["CostSummaryOut"];
+            all_time: components["schemas"]["CostSummaryOut"];
+            /** Monthly */
+            monthly: components["schemas"]["MonthOut"][];
+            ownership: components["schemas"]["OwnershipOut"];
+            economy: components["schemas"]["EconomyOut"];
+            /** Repeat Jobs */
+            repeat_jobs: components["schemas"]["RepeatJobOut"][];
+            /** Upcoming */
+            upcoming: components["schemas"]["UpcomingOut"][];
+            /** Groups */
+            groups: number[][];
+        };
         /** JobTypeIn */
         JobTypeIn: {
             /** Name */
@@ -627,6 +703,38 @@ export interface components {
             username: string;
             /** Password */
             password: string;
+        };
+        /** MonthOut */
+        MonthOut: {
+            /** Month */
+            month: string;
+            /** Total */
+            total: number;
+            /** By Category */
+            by_category: {
+                [key: string]: number;
+            };
+        };
+        /** OwnershipOut */
+        OwnershipOut: {
+            /** Total */
+            total: number | null;
+            /** Running */
+            running: number;
+            /** Purchase Price */
+            purchase_price: number | null;
+            /** Sold Price */
+            sold_price: number | null;
+            /** Months */
+            months: number | null;
+            /** Distance */
+            distance: number | null;
+            /** Per Distance */
+            per_distance: number | null;
+            /** Per Month */
+            per_month: number | null;
+            /** Missing */
+            missing: string[];
         };
         /** PasswordIn */
         PasswordIn: {
@@ -790,6 +898,42 @@ export interface components {
              */
             state: "ok" | "soon" | "due" | "overdue";
         };
+        /** RepeatJobOut */
+        RepeatJobOut: {
+            /** Name */
+            name: string;
+            /** Count */
+            count: number;
+            /** Last Date */
+            last_date: string | null;
+            /** Last Odometer */
+            last_odometer: number | null;
+            /** Avg Days */
+            avg_days: number | null;
+            /** Avg Distance */
+            avg_distance: number | null;
+            /** Avg Cost */
+            avg_cost: number | null;
+            /** Next Date */
+            next_date: string | null;
+            /** Next Odometer */
+            next_odometer: number | null;
+        };
+        /** SegmentOut */
+        SegmentOut: {
+            /** Date */
+            date: string | null;
+            /** Odometer */
+            odometer: number;
+            /** Distance */
+            distance: number;
+            /** Volume */
+            volume: number;
+            /** Value */
+            value: number;
+            /** Outlier */
+            outlier: boolean;
+        };
         /** SettingsIn */
         SettingsIn: {
             /** Region */
@@ -876,6 +1020,17 @@ export interface components {
             created_at: string;
             /** Last Used At */
             last_used_at: string | null;
+        };
+        /** UpcomingOut */
+        UpcomingOut: {
+            /** Id */
+            id: number;
+            /** Title */
+            title: string;
+            /** Projected Date */
+            projected_date: string | null;
+            /** Last Cost */
+            last_cost: number | null;
         };
         /** UserOut */
         UserOut: {
@@ -2209,6 +2364,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ReminderOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_insights_api_vehicles__vehicle_id__insights_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                vehicle_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InsightsOut"];
                 };
             };
             /** @description Validation Error */

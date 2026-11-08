@@ -1,4 +1,4 @@
-import { Bell, Car, FileText, House, List, LogOut, Plus, Settings, X } from "lucide-react";
+import { Bell, Car, ChartNoAxesColumn, FileText, House, List, LogOut, Plus, Settings, X } from "lucide-react";
 import { useRef } from "react";
 import { Link, NavLink, Outlet, useMatch } from "react-router";
 import type { User } from "../api/client";
@@ -30,6 +30,12 @@ export function Shell({ user }: { user: User }) {
     <NavLink to={`/vehicles/${current}/records`} className={({ isActive }) => `nav-link${isActive || onRecord ? " active" : ""}`}>
       <List size={20} aria-hidden="true" />
       Records
+    </NavLink>
+  );
+  const insights = current !== undefined && (
+    <NavLink to={`/vehicles/${current}/insights`} className="nav-link">
+      <ChartNoAxesColumn size={20} aria-hidden="true" />
+      Insights
     </NavLink>
   );
   const reminders = (
@@ -111,6 +117,7 @@ export function Shell({ user }: { user: User }) {
           </div>
           {home}
           {records}
+          {insights}
           {reminders}
           {documents}
           {garage}
@@ -130,7 +137,7 @@ export function Shell({ user }: { user: User }) {
         {home}
         {records}
         {add("fab")}
-        {reminders}
+        {insights}
         {garage}
       </nav>
       {current !== undefined && (
