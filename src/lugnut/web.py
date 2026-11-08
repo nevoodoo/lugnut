@@ -21,7 +21,7 @@ def mount_frontend(app: FastAPI) -> None:
 
     @app.get("/{path:path}", include_in_schema=False)
     def spa(path: str) -> FileResponse:
-        if path == "api" or path.startswith("api/"):
+        if path.split("/")[0] in ("api", "mcp"):
             raise HTTPException(404, "Not found")
         index = FileResponse(root / "index.html", headers=_NO_CACHE)
         full = os.path.normpath(os.path.join(base, path))

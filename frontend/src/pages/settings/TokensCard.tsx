@@ -49,6 +49,12 @@ export function TokensCard({ s }: { s: SettingsData }) {
 
   return (
     <Card label="API tokens">
+      <p className="muted">
+        Assistants that support MCP can connect to {window.location.origin}/mcp with a token.{" "}
+        <a href="https://nevoodoo.github.io/lugnut/mcp/" target="_blank" rel="noreferrer">
+          How to set it up
+        </a>
+      </p>
       {fresh && (
         <div className="token-new" role="group" aria-label="New token">
           <p>
