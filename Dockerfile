@@ -6,7 +6,7 @@ COPY frontend/ ./
 # vite writes to ../src/lugnut/static
 RUN npm run build
 
-FROM python:3.13-slim@sha256:b3575dcf816cdacc5292df77a6e3e59b8941631078373a045efa2ac1e9c5c3b2 AS wheel
+FROM python:3.15-slim@sha256:65a65fc7b30b06cb6df4930fd4650697cb23f4c2698ab81fc87e4b031bc36928 AS wheel
 COPY --from=ghcr.io/astral-sh/uv:0.11.1@sha256:fc93e9ecd7218e9ec8fba117af89348eef8fd2463c50c13347478769aaedd0ce /uv /usr/local/bin/uv
 WORKDIR /app
 COPY pyproject.toml LICENSE README.md ./
@@ -14,7 +14,7 @@ COPY src/ src/
 COPY --from=frontend /app/src/lugnut/static src/lugnut/static
 RUN uv build --wheel --out-dir /dist
 
-FROM python:3.13-slim@sha256:b3575dcf816cdacc5292df77a6e3e59b8941631078373a045efa2ac1e9c5c3b2
+FROM python:3.15-slim@sha256:65a65fc7b30b06cb6df4930fd4650697cb23f4c2698ab81fc87e4b031bc36928
 RUN useradd --uid 1000 --create-home lugnut && mkdir /data && chown lugnut /data
 RUN --mount=type=bind,from=wheel,source=/dist,target=/dist \
     --mount=type=bind,from=wheel,source=/usr/local/bin/uv,target=/usr/local/bin/uv \
