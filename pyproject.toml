@@ -11,12 +11,12 @@ requires-python = ">=3.13"
 dependencies = [
     "alembic>=1.20.1",
     "argon2-cffi>=25.1.0",
-    "fastapi>=0.162.0",
+    "fastapi>=0.163.1",
     "httpx>=0.28",
     "mcp>=2.3,<3",
-    "pydantic-settings>=2.16.2",
-    "python-multipart>=0.0.33",
-    "sqlalchemy>=2.1.6",
+    "pydantic-settings>=2.16.3",
+    "python-multipart>=0.0.34",
+    "sqlalchemy>=2.1.9",
     "tzdata>=2026.6",
     "uvicorn>=0.54.0",
 ]
@@ -34,7 +34,7 @@ dev = [
     "mypy>=2.4.1",
     "pre-commit>=4.7.0",
     "pytest>=9.2.0",
-    "ruff>=0.17.3",
+    "ruff>=0.17.5",
 ]
 
 [tool.ruff]
